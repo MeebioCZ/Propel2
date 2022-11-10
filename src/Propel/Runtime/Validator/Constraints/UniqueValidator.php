@@ -16,11 +16,11 @@ class UniqueValidator extends ConstraintValidator
 {
     /**
      * @param mixed $value
-     * @param \Symfony\Component\Validator\Constraint $constraint
+     * @param \Propel\Runtime\Validator\Constraints\Unique $constraint
      *
      * @return void
      */
-    public function validate($value, Constraint $constraint)
+    public function validate($value, Constraint $constraint): void
     {
         if ($value === null) {
             return;

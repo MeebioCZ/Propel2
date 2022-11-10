@@ -40,30 +40,30 @@ abstract class PdoAdapter
     /**
      * Build database connection
      *
-     * @param array $conparams connection parameters
+     * @param array $params connection parameters
      *
      * @throws \Propel\Runtime\Exception\InvalidArgumentException
      * @throws \Propel\Runtime\Adapter\Exception\AdapterException
      *
      * @return \Propel\Runtime\Connection\PdoConnection
      */
-    public function getConnection($conparams)
+    public function getConnection(array $params): PdoConnection
     {
-        $conparams = $this->prepareParams($conparams);
+        $params = $this->prepareParams($params);
 
-        if (!isset($conparams['dsn'])) {
+        if (!isset($params['dsn'])) {
             throw new InvalidArgumentException('No dsn specified in your connection parameters');
         }
 
-        $dsn = $conparams['dsn'];
-        $user = isset($conparams['user']) ? $conparams['user'] : null;
-        $password = isset($conparams['password']) ? $conparams['password'] : null;
+        $dsn = $params['dsn'];
+        $user = $params['user'] ?? null;
+        $password = $params['password'] ?? null;
 
         // load any driver options from the config file
         // driver options are those PDO settings that have to be passed during the connection construction
         $driverOptions = [];
-        if (isset($conparams['options']) && is_array($conparams['options'])) {
-            foreach ($conparams['options'] as $option => $optiondata) {
+        if (isset($params['options']) && is_array($params['options'])) {
+            foreach ($params['options'] as $option => $optiondata) {
                 $value = $optiondata;
                 if (is_string($value) && strpos($value, '::') !== false) {
                     if (!defined($value)) {
@@ -77,7 +77,7 @@ abstract class PdoAdapter
 
         try {
             $con = new PdoConnection($dsn, $user, $password, $driverOptions);
-            $this->initConnection($con, isset($conparams['settings']) && is_array($conparams['settings']) ? $conparams['settings'] : []);
+            $this->initConnection($con, isset($params['settings']) && is_array($params['settings']) ? $params['settings'] : []);
         } catch (PDOException $e) {
             throw new AdapterException('Unable to open PDO connection', 0, $e);
         }
@@ -91,7 +91,7 @@ abstract class PdoAdapter
      *
      * @return string
      */
-    public function compareRegex($left, $right)
+    public function compareRegex(string $left, string $right): string
     {
         return sprintf('%s REGEXP %s', $left, $right);
     }
@@ -99,7 +99,7 @@ abstract class PdoAdapter
     /**
      * @return string
      */
-    public function getAdapterId()
+    public function getAdapterId(): string
     {
         $class = str_replace('Adapter', '', static::class);
         $lastSlash = strrpos($class, '\\');
@@ -110,13 +110,13 @@ abstract class PdoAdapter
     /**
      * Prepare the parameters for a Connection
      *
-     * @param array $conparams the connection parameters from the configuration
+     * @param array $params the connection parameters from the configuration
      *
      * @return array the modified parameters
      */
-    protected function prepareParams($conparams)
+    protected function prepareParams(array $params): array
     {
-        return $conparams;
+        return $params;
     }
 
     /**
@@ -135,7 +135,7 @@ abstract class PdoAdapter
      *
      * @return void
      */
-    public function initConnection(ConnectionInterface $con, array $settings)
+    public function initConnection(ConnectionInterface $con, array $settings): void
     {
         if (isset($settings['charset'])) {
             $this->setCharset($con, $settings['charset']);
@@ -161,7 +161,7 @@ abstract class PdoAdapter
      *
      * @return void
      */
-    public function setCharset(ConnectionInterface $con, $charset)
+    public function setCharset(ConnectionInterface $con, string $charset): void
     {
         $con->exec(sprintf("SET NAMES '%s'", $charset));
     }
@@ -173,7 +173,7 @@ abstract class PdoAdapter
      *
      * @return string The upper case string.
      */
-    public function toUpperCase($in)
+    public function toUpperCase(string $in): string
     {
         return sprintf('UPPER(%s)', $in);
     }
@@ -185,7 +185,7 @@ abstract class PdoAdapter
      *
      * @return string The string in a case that can be ignored.
      */
-    public function ignoreCase($in)
+    public function ignoreCase(string $in): string
     {
         return sprintf('UPPER(%s)', $in);
     }
@@ -200,7 +200,7 @@ abstract class PdoAdapter
      *
      * @return string The string in a case that can be ignored.
      */
-    public function ignoreCaseInOrderBy($in)
+    public function ignoreCaseInOrderBy(string $in): string
     {
         return $this->ignoreCase($in);
     }
@@ -212,7 +212,7 @@ abstract class PdoAdapter
      *
      * @return string The text delimiter.
      */
-    public function getStringDelimiter()
+    public function getStringDelimiter(): string
     {
         return '\'';
     }
@@ -224,7 +224,7 @@ abstract class PdoAdapter
      *
      * @return string The quoted identifier.
      */
-    public function quoteIdentifier($text)
+    public function quoteIdentifier(string $text): string
     {
         return '"' . $text . '"';
     }
@@ -239,9 +239,10 @@ abstract class PdoAdapter
      *
      * @return string
      */
-    public function quote($text)
+    public function quote(string $text): string
     {
-        if (($pos = strrpos($text, '.')) !== false) {
+        $pos = strrpos($text, '.');
+        if ($pos !== false) {
             $table = substr($text, 0, $pos);
             $column = substr($text, $pos + 1);
         } else {
@@ -251,9 +252,9 @@ abstract class PdoAdapter
 
         if ($table) {
             return $this->quoteIdentifierTable($table) . '.' . $this->quoteIdentifier($column);
-        } else {
-            return $this->quoteIdentifier($column);
         }
+
+        return $this->quoteIdentifier($column);
     }
 
     /**
@@ -266,7 +267,7 @@ abstract class PdoAdapter
      *
      * @return string The quoted table name
      */
-    public function quoteIdentifierTable($table)
+    public function quoteIdentifierTable(string $table): string
     {
         return implode(' ', array_map([$this, 'quoteIdentifier'], explode(' ', $table)));
     }
@@ -276,7 +277,7 @@ abstract class PdoAdapter
      *
      * @return int One of AdapterInterface:ID_METHOD_SEQUENCE, AdapterInterface::ID_METHOD_AUTOINCREMENT.
      */
-    protected function getIdMethod()
+    protected function getIdMethod(): int
     {
         return AdapterInterface::ID_METHOD_AUTOINCREMENT;
     }
@@ -286,7 +287,7 @@ abstract class PdoAdapter
      *
      * @return bool
      */
-    public function isGetIdBeforeInsert()
+    public function isGetIdBeforeInsert(): bool
     {
         return $this->getIdMethod() === AdapterInterface::ID_METHOD_SEQUENCE;
     }
@@ -296,7 +297,7 @@ abstract class PdoAdapter
      *
      * @return bool
      */
-    public function isGetIdAfterInsert()
+    public function isGetIdAfterInsert(): bool
     {
         return $this->getIdMethod() === AdapterInterface::ID_METHOD_AUTOINCREMENT;
     }
@@ -309,7 +310,7 @@ abstract class PdoAdapter
      *
      * @return mixed
      */
-    public function getId(ConnectionInterface $con, $name = null)
+    public function getId(ConnectionInterface $con, ?string $name = null)
     {
         return $con->lastInsertId($name);
     }
@@ -322,7 +323,7 @@ abstract class PdoAdapter
      *
      * @return string The formatted temporal value
      */
-    public function formatTemporalValue($value, ColumnMap $cMap)
+    public function formatTemporalValue($value, ColumnMap $cMap): string
     {
         /** @var \Propel\Runtime\Util\PropelDateTime|null $dt */
         $dt = PropelDateTime::newInstance($value);
@@ -330,6 +331,7 @@ abstract class PdoAdapter
             switch ($cMap->getType()) {
                 case PropelTypes::TIMESTAMP:
                 case PropelTypes::BU_TIMESTAMP:
+                case PropelTypes::DATETIME:
                     $value = $dt->format($this->getTimestampFormatter());
 
                     break;
@@ -353,7 +355,7 @@ abstract class PdoAdapter
      *
      * @return string
      */
-    public function getTimestampFormatter()
+    public function getTimestampFormatter(): string
     {
         return 'Y-m-d H:i:s.u';
     }
@@ -363,7 +365,7 @@ abstract class PdoAdapter
      *
      * @return string
      */
-    public function getGroupBy(Criteria $criteria)
+    public function getGroupBy(Criteria $criteria): string
     {
         $groupBy = $criteria->getGroupByColumns();
         if ($groupBy) {
@@ -378,7 +380,7 @@ abstract class PdoAdapter
      *
      * @return string
      */
-    public function getDateFormatter()
+    public function getDateFormatter(): string
     {
         return 'Y-m-d';
     }
@@ -388,7 +390,7 @@ abstract class PdoAdapter
      *
      * @return string
      */
-    public function getTimeFormatter()
+    public function getTimeFormatter(): string
     {
         return 'H:i:s.u';
     }
@@ -403,7 +405,7 @@ abstract class PdoAdapter
      *
      * @return void
      */
-    public function cleanupSQL(&$sql, array &$params, Criteria $values, DatabaseMap $dbMap)
+    public function cleanupSQL(string &$sql, array &$params, Criteria $values, DatabaseMap $dbMap): void
     {
     }
 
@@ -417,7 +419,7 @@ abstract class PdoAdapter
      *
      * @return string
      */
-    public function createSelectSqlPart(Criteria $criteria, &$fromClause, $aliasAll = false)
+    public function createSelectSqlPart(Criteria $criteria, array &$fromClause, bool $aliasAll = false): string
     {
         $selectClause = [];
 
@@ -479,9 +481,9 @@ abstract class PdoAdapter
      *
      * @param \Propel\Runtime\ActiveQuery\Criteria $criteria
      *
-     * @return string[]
+     * @return array<string>
      */
-    public function getPlainSelectedColumns(Criteria $criteria)
+    public function getPlainSelectedColumns(Criteria $criteria): array
     {
         $selected = [];
         foreach ($criteria->getSelectColumns() as $columnName) {
@@ -509,7 +511,7 @@ abstract class PdoAdapter
      *
      * @return \Propel\Runtime\ActiveQuery\Criteria The input, with Select columns replaced by aliases
      */
-    public function turnSelectColumnsToAliases(Criteria $criteria)
+    public function turnSelectColumnsToAliases(Criteria $criteria): Criteria
     {
         $selectColumns = $criteria->getSelectColumns();
         // clearSelectColumns also clears the aliases, so get them too
@@ -550,7 +552,7 @@ abstract class PdoAdapter
      * $adapter = Propel::getServiceContainer()->getAdapter($criteria->getDbName());
      * $sql = $criteria->createSelectSql($params);
      * $stmt = $con->prepare($sql);
-     * $params = array();
+     * $params = [];
      * $adapter->populateStmtValues($stmt, $params, Propel::getServiceContainer()->getDatabaseMap($critera->getDbName()));
      * $stmt->execute();
      * </code>
@@ -561,7 +563,7 @@ abstract class PdoAdapter
      *
      * @return void
      */
-    public function bindValues(StatementInterface $stmt, array $params, DatabaseMap $dbMap)
+    public function bindValues(StatementInterface $stmt, array $params, DatabaseMap $dbMap): void
     {
         $position = 0;
         foreach ($params as $param) {
@@ -575,7 +577,7 @@ abstract class PdoAdapter
             }
             $tableName = $param['table'];
             if ($tableName === null) {
-                $type = isset($param['type']) ? $param['type'] : PDO::PARAM_STR;
+                $type = $param['type'] ?? PDO::PARAM_STR;
                 $stmt->bindValue($parameter, $value, $type);
 
                 continue;
@@ -597,7 +599,7 @@ abstract class PdoAdapter
      *
      * @return bool
      */
-    public function bindValue(StatementInterface $stmt, $parameter, $value, ColumnMap $cMap, $position = null)
+    public function bindValue(StatementInterface $stmt, string $parameter, $value, ColumnMap $cMap, ?int $position = null): bool
     {
         if ($cMap->isTemporal()) {
             $value = $this->formatTemporalValue($value, $cMap);

@@ -21,7 +21,7 @@ class MappingModelTest extends TestCase
      *
      * @return void
      */
-    public function testGetDefaultValueForArray($value, $expected)
+    public function testGetDefaultValueForArray(string $value, $expected)
     {
         $mappingModel = new TestableMappingModel();
         $this->assertEquals($expected, $mappingModel->getDefaultValueForArray($value));
@@ -31,7 +31,6 @@ class MappingModelTest extends TestCase
     {
         return [
             ['', null],
-            [null, null],
             ['FOO', '||FOO||'],
             ['FOO, BAR', '||FOO | BAR||'],
             ['FOO , BAR', '||FOO | BAR||'],
@@ -44,7 +43,7 @@ class MappingModelTest extends TestCase
 
 class TestableMappingModel extends MappingModel
 {
-    public function getDefaultValueForArray($value)
+    public function getDefaultValueForArray(string $value): ?string
     {
         return parent::getDefaultValueForArray($value);
     }
@@ -59,7 +58,7 @@ class TestableMappingModel extends MappingModel
     /**
      * @return void
      */
-    protected function setupObject()
+    protected function setupObject(): void
     {
     }
 }

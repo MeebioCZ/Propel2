@@ -23,7 +23,14 @@ use Propel\Runtime\Propel;
  */
 abstract class AbstractCriterion
 {
+    /**
+     * @var string
+     */
     public const UND = ' AND ';
+
+    /**
+     * @var string
+     */
     public const ODER = ' OR ';
 
     /**
@@ -70,7 +77,7 @@ abstract class AbstractCriterion
     /**
      * Other connected criterions
      *
-     * @var \Propel\Runtime\ActiveQuery\Criterion\AbstractCriterion[]
+     * @var array<\Propel\Runtime\ActiveQuery\Criterion\AbstractCriterion>
      */
     protected $clauses = [];
 
@@ -78,7 +85,7 @@ abstract class AbstractCriterion
      * Operators for connected criterions
      * Only self::UND and self::ODER are accepted
      *
-     * @var string[]
+     * @var array<string>
      */
     protected $conjunctions = [];
 
@@ -86,11 +93,11 @@ abstract class AbstractCriterion
      * Create a new instance.
      *
      * @param \Propel\Runtime\ActiveQuery\Criteria $outer The outer class (this is an "inner" class).
-     * @param string $column TABLE.COLUMN format.
+     * @param \Propel\Runtime\Map\ColumnMap|string $column TABLE.COLUMN format.
      * @param mixed $value
      * @param string|null $comparison
      */
-    public function __construct(Criteria $outer, $column, $value, $comparison = null)
+    public function __construct(Criteria $outer, $column, $value, ?string $comparison = null)
     {
         $this->value = $value;
         $this->setColumn($column);
@@ -105,7 +112,7 @@ abstract class AbstractCriterion
      *
      * @return void
      */
-    public function init(Criteria $criteria)
+    public function init(Criteria $criteria): void
     {
         try {
             $db = Propel::getServiceContainer()->getAdapter($criteria->getDbName());
@@ -117,8 +124,8 @@ abstract class AbstractCriterion
         }
 
         // init $this->realtable
-        $realtable = $criteria->getTableForAlias($this->table);
-        $this->realtable = $realtable ? $realtable : $this->table;
+        $realtable = $criteria->getTableForAlias((string)$this->table);
+        $this->realtable = $realtable ?: $this->table;
     }
 
     /**
@@ -128,7 +135,7 @@ abstract class AbstractCriterion
      *
      * @return void
      */
-    protected function setColumn($column)
+    protected function setColumn($column): void
     {
         if ($column instanceof ColumnMap) {
             $this->column = $column->getName();
@@ -149,9 +156,9 @@ abstract class AbstractCriterion
     /**
      * Get the column name.
      *
-     * @return string A String with the column name.
+     * @return string|null A String with the column name.
      */
-    public function getColumn()
+    public function getColumn(): ?string
     {
         return $this->column;
     }
@@ -163,7 +170,7 @@ abstract class AbstractCriterion
      *
      * @return void
      */
-    public function setTable($name)
+    public function setTable(string $name): void
     {
         $this->table = $name;
     }
@@ -173,7 +180,7 @@ abstract class AbstractCriterion
      *
      * @return string|null A String with the table name.
      */
-    public function getTable()
+    public function getTable(): ?string
     {
         return $this->table;
     }
@@ -183,7 +190,7 @@ abstract class AbstractCriterion
      *
      * @return string A String with the comparison.
      */
-    public function getComparison()
+    public function getComparison(): string
     {
         return $this->comparison;
     }
@@ -206,7 +213,7 @@ abstract class AbstractCriterion
      *
      * @return \Propel\Runtime\Adapter\AdapterInterface value of db.
      */
-    public function getAdapter()
+    public function getAdapter(): AdapterInterface
     {
         return $this->db;
     }
@@ -220,7 +227,7 @@ abstract class AbstractCriterion
      *
      * @return void
      */
-    public function setAdapter(AdapterInterface $v)
+    public function setAdapter(AdapterInterface $v): void
     {
         $this->db = $v;
         foreach ($this->clauses as $clause) {
@@ -231,9 +238,9 @@ abstract class AbstractCriterion
     /**
      * Get the list of clauses in this Criterion.
      *
-     * @return self[]
+     * @return array<self>
      */
-    public function getClauses()
+    public function getClauses(): array
     {
         return $this->clauses;
     }
@@ -243,7 +250,7 @@ abstract class AbstractCriterion
      *
      * @return array
      */
-    public function getConjunctions()
+    public function getConjunctions(): array
     {
         return $this->conjunctions;
     }
@@ -289,7 +296,7 @@ abstract class AbstractCriterion
      *
      *                                expression into proper SQL.
      */
-    public function appendPsTo(&$sb, array &$params)
+    public function appendPsTo(string &$sb, array &$params): void
     {
         if (!$this->clauses) {
             $this->appendPsForUniqueClauseTo($sb, $params);
@@ -310,7 +317,7 @@ abstract class AbstractCriterion
     /**
      * @return string
      */
-    public function __toString()
+    public function __toString(): string
     {
         $sb = '';
         $params = [];
@@ -327,7 +334,7 @@ abstract class AbstractCriterion
      *
      * @return void
      */
-    abstract protected function appendPsForUniqueClauseTo(&$sb, array &$params);
+    abstract protected function appendPsForUniqueClauseTo(string &$sb, array &$params): void;
 
     /**
      * This method checks another Criteria to see if they contain
@@ -337,7 +344,7 @@ abstract class AbstractCriterion
      *
      * @return bool
      */
-    public function equals($obj)
+    public function equals(?object $obj): bool
     {
         // TODO: optimize me with early outs
         if ($this === $obj) {
@@ -381,7 +388,7 @@ abstract class AbstractCriterion
      *
      * @return array
      */
-    public function getAllTables()
+    public function getAllTables(): array
     {
         $tables = [];
         $this->addCriterionTable($this, $tables);
@@ -398,7 +405,7 @@ abstract class AbstractCriterion
      *
      * @return void
      */
-    private function addCriterionTable(AbstractCriterion $c, array &$s)
+    private function addCriterionTable(AbstractCriterion $c, array &$s): void
     {
         $s[] = $c->getTable();
         foreach ($c->getClauses() as $clause) {
@@ -410,9 +417,9 @@ abstract class AbstractCriterion
      * get an array of all criterion attached to this
      * recursing through all sub criterion
      *
-     * @return \Propel\Runtime\ActiveQuery\Criterion\AbstractCriterion[]
+     * @return array<\Propel\Runtime\ActiveQuery\Criterion\AbstractCriterion>
      */
-    public function getAttachedCriterion()
+    public function getAttachedCriterion(): array
     {
         $criterions = [$this];
         foreach ($this->getClauses() as $criterion) {

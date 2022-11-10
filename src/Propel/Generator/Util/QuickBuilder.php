@@ -186,7 +186,7 @@ class QuickBuilder
      *
      * @return \Propel\Generator\Config\GeneratorConfigInterface
      */
-    public function getConfig()
+    public function getConfig(): GeneratorConfigInterface
     {
         if ($this->config === null) {
             $this->config = new QuickGeneratorConfig();
@@ -261,11 +261,11 @@ class QuickBuilder
         $pdo = new PdoConnection($dsn, $user, $pass);
         $con = new ConnectionWrapper($pdo);
         $con->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_WARNING);
-        /** @var \Propel\Runtime\Adapter\Pdo\SqliteAdapter $adapter */
+        /** @phpstan-var \Propel\Runtime\Adapter\Pdo\SqliteAdapter $adapter */
         $adapter->initConnection($con, []);
         $this->buildSQL($con);
         $this->buildClasses($classTargets);
-        $name = $this->getDatabase()->getName();
+        $name = (string)$this->getDatabase()->getName();
         Propel::getServiceContainer()->setAdapter($name, $adapter);
         Propel::getServiceContainer()->setConnection($name, $con);
 
@@ -292,7 +292,7 @@ class QuickBuilder
      *
      * @throws \Exception
      *
-     * @return int the number of statements executed
+     * @return int The number of statements executed
      */
     public function buildSQL(ConnectionInterface $con): int
     {
@@ -344,11 +344,11 @@ class QuickBuilder
             } catch (Exception $e) {
                 //echo $sql; //uncomment for better debugging
                 throw new BuildException(sprintf(
-                    "Can not execute SQL: \n%s\nFrom database: \n%s\n\nTo database: \n%s\n\nDiff:\n%s",
+                    "Cannot execute SQL: \n%s\nFrom database: \n%s\n\nTo database: \n%s\n\nDiff:\n%s",
                     $statement,
                     $this->database,
                     $database,
-                    $diff
+                    $diff,
                 ), null, $e);
             }
         }
@@ -413,7 +413,7 @@ class QuickBuilder
      * physical filesystem, which is supposed to be for debugging purpose, the classes reside on separate file,
      * for easier debug.
      *
-     * @param string[]|null $classTargets array('tablemap', 'object', 'query', 'objectstub', 'querystub')
+     * @param array<string>|null $classTargets array('tablemap', 'object', 'query', 'objectstub', 'querystub')
      *
      * @return void
      */
@@ -434,7 +434,7 @@ class QuickBuilder
     }
 
     /**
-     * @param string[]|null $classTargets
+     * @param array<string>|null $classTargets
      *
      * @return string
      */
@@ -450,7 +450,7 @@ class QuickBuilder
 
     /**
      * @param \Propel\Generator\Model\Table $table
-     * @param string[]|null $classTargets
+     * @param array<string>|null $classTargets
      *
      * @return string
      */
@@ -610,10 +610,10 @@ class QuickBuilder
     /**
      * Create separate classes to write to physical filesystem.
      *
-     * @param string[] $classes
-     * @param \Propel\Generator\Model\Table[] $tables Array of Table objects
+     * @param array<string> $classes
+     * @param array<\Propel\Generator\Model\Table> $tables Array of Table objects
      *
-     * @return string[] The files to include
+     * @return array<string> The files to include
      */
     private function buildClassesToPhysical(array $classes, array $tables): array
     {
@@ -638,10 +638,10 @@ class QuickBuilder
     /**
      * Create an all-classes file to write to virtual filesystem.
      *
-     * @param string[] $classes
-     * @param \Propel\Generator\Model\Table[] $tables Array of Table objects
+     * @param array<string> $classes
+     * @param array<\Propel\Generator\Model\Table> $tables Array of Table objects
      *
-     * @return string[] The one element array, containing the file to include
+     * @return array<string> The one element array, containing the file to include
      */
     private function buildClassesToVirtual(array $classes, array $tables): array
     {

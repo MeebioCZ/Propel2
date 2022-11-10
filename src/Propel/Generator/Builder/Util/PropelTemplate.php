@@ -40,7 +40,7 @@ class PropelTemplate
      *
      * @return void
      */
-    public function setTemplate($template)
+    public function setTemplate(string $template): void
     {
         $this->template = $template;
     }
@@ -56,7 +56,7 @@ class PropelTemplate
      *
      * @return void
      */
-    public function setTemplateFile($filePath)
+    public function setTemplateFile(string $filePath): void
     {
         $this->templateFile = $filePath;
     }
@@ -77,7 +77,7 @@ class PropelTemplate
      *
      * @return string The rendered template
      */
-    public function render($vars = [])
+    public function render(array $vars = []): string
     {
         if ($this->templateFile === null && $this->template === null) {
             throw new InvalidArgumentException('You must set a template or a template file before rendering');
@@ -85,7 +85,12 @@ class PropelTemplate
 
         extract($vars);
         ob_start();
-        ob_implicit_flush(0);
+
+        /**
+         * @psalm-suppress InvalidArgument
+         * @phpstan-ignore-next-line
+         */
+        ob_implicit_flush(false);
 
         try {
             if ($this->templateFile !== null) {

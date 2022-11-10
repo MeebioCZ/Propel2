@@ -10,6 +10,8 @@ pom.xml
 php-cs-fixer.phar
 
 generated-classes/
+generated-conf/
+generated-sql/
 
 tests/Fixtures/namespaced/build/
 tests/Fixtures/nestedset/build/
@@ -17,6 +19,8 @@ tests/Fixtures/schemas/build/
 
 tests/Fixtures/bookstore/build/
 tests/Fixtures/bookstore/propel.yaml
+
+tests/Fixtures/bookstore-packaged/
 
 tests/Fixtures/namespaced/propel.yaml
 

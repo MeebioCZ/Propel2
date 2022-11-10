@@ -108,13 +108,13 @@ class TestPrepareCommand extends AbstractCommand
 
     /**
      * @param string $fixturesDir
-     * @param string[] $connections
+     * @param array<string> $connections
      * @param \Symfony\Component\Console\Input\InputInterface $input
      * @param \Symfony\Component\Console\Output\OutputInterface $output
      *
      * @return int Exit code
      */
-    protected function buildFixtures($fixturesDir, $connections, InputInterface $input, OutputInterface $output): int
+    protected function buildFixtures(string $fixturesDir, array $connections, InputInterface $input, OutputInterface $output): int
     {
         if (!file_exists($this->root . '/' . $fixturesDir)) {
             $output->writeln(sprintf('<error>Directory "%s" not found.</error>', $fixturesDir));
@@ -187,7 +187,7 @@ class TestPrepareCommand extends AbstractCommand
                     $conParams[] = sprintf(
                         '%s=%s',
                         $con,
-                        $input->getOption('dsn')
+                        $input->getOption('dsn'),
                     );
                 } else {
                     $conParams[] = sprintf(
@@ -195,7 +195,7 @@ class TestPrepareCommand extends AbstractCommand
                         $con,
                         $input->getOption('dsn'),
                         $input->getOption('user'),
-                        $input->getOption('password')
+                        $input->getOption('password'),
                     );
                 }
             }

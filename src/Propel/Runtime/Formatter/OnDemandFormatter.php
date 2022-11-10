@@ -9,6 +9,8 @@
 namespace Propel\Runtime\Formatter;
 
 use Propel\Runtime\ActiveQuery\BaseModelCriteria;
+use Propel\Runtime\ActiveRecord\ActiveRecordInterface;
+use Propel\Runtime\Collection\OnDemandCollection;
 use Propel\Runtime\DataFetcher\DataFetcherInterface;
 use Propel\Runtime\Exception\LogicException;
 use ReflectionClass;
@@ -49,7 +51,7 @@ class OnDemandFormatter extends ObjectFormatter
      *
      * @return \Propel\Runtime\Collection\OnDemandCollection
      */
-    public function format(?DataFetcherInterface $dataFetcher = null)
+    public function format(?DataFetcherInterface $dataFetcher = null): OnDemandCollection
     {
         $this->checkInit();
         if ($dataFetcher) {
@@ -73,7 +75,7 @@ class OnDemandFormatter extends ObjectFormatter
      *
      * @return string
      */
-    public function getCollectionClassName()
+    public function getCollectionClassName(): string
     {
         return '\Propel\Runtime\Collection\OnDemandCollection';
     }
@@ -81,7 +83,7 @@ class OnDemandFormatter extends ObjectFormatter
     /**
      * @return \Propel\Runtime\Collection\OnDemandCollection
      */
-    public function getCollection()
+    public function getCollection(): OnDemandCollection
     {
         $class = $this->getCollectionClassName();
 
@@ -101,7 +103,7 @@ class OnDemandFormatter extends ObjectFormatter
      *
      * @return \Propel\Runtime\ActiveRecord\ActiveRecordInterface
      */
-    public function getAllObjectsFromRow($row)
+    public function getAllObjectsFromRow(array $row): ActiveRecordInterface
     {
         $col = 0;
 
@@ -111,6 +113,11 @@ class OnDemandFormatter extends ObjectFormatter
         $tableMap = $this->tableMap;
         $class = $this->isSingleTableInheritance ? $tableMap::getOMClass($row, $col, false) : $this->class;
         $obj = $this->getSingleObjectFromRow($row, $class, $col);
+
+        //TODO: is this var even useable?
+        /** @var array<string, object> $hydrationChain */
+        $hydrationChain = [];
+
         // related objects using 'with'
         foreach ($this->getWith() as $modelWith) {
             if ($modelWith->isSingleTableInheritance()) {
@@ -128,7 +135,7 @@ class OnDemandFormatter extends ObjectFormatter
             $endObject = $this->getSingleObjectFromRow($row, $class, $col);
             if ($modelWith->isPrimary()) {
                 $startObject = $obj;
-            } elseif (isset($hydrationChain)) {
+            } elseif ($hydrationChain && isset($hydrationChain[$modelWith->getLeftPhpName()])) {
                 $startObject = $hydrationChain[$modelWith->getLeftPhpName()];
             } else {
                 continue;
@@ -143,11 +150,8 @@ class OnDemandFormatter extends ObjectFormatter
 
                 continue;
             }
-            if (isset($hydrationChain)) {
-                $hydrationChain[$modelWith->getRightPhpName()] = $endObject;
-            } else {
-                $hydrationChain = [$modelWith->getRightPhpName() => $endObject];
-            }
+
+            $hydrationChain[$modelWith->getRightPhpName()] = $endObject;
             $relationMethod = $modelWith->getRelationMethod();
             $startObject->$relationMethod($endObject);
         }

@@ -28,6 +28,9 @@ use Propel\Generator\Platform\PlatformInterface;
  */
 class SchemaReader
 {
+    /**
+     * @var bool
+     */
     public const DEBUG = false;
 
     /**
@@ -36,7 +39,9 @@ class SchemaReader
     private $schema;
 
     /**
-     * @var resource
+     * @psalm-suppress UndefinedDocblockClass
+     * @phpstan-ignore-next-line
+     * @var \XMLParser|resource|null
      */
     private $parser;
 
@@ -106,13 +111,6 @@ class SchemaReader
     private $currParameterListCollector;
 
     /**
-     * @deprecated Unused.
-     *
-     * @var string
-     */
-    private $encoding;
-
-    /**
      * Two-dimensional array,
      * first dimension is for schemas(key is the path to the schema file),
      * second is for tags within the schema.
@@ -126,13 +124,11 @@ class SchemaReader
      *
      * @param \Propel\Generator\Platform\PlatformInterface|null $defaultPlatform The default database platform for the application.
      * @param string|null $defaultPackage the default PHP package used for the om
-     * @param string $encoding The database encoding.
      */
-    public function __construct(?PlatformInterface $defaultPlatform = null, $defaultPackage = null, $encoding = 'iso-8859-1')
+    public function __construct(?PlatformInterface $defaultPlatform = null, ?string $defaultPackage = null)
     {
         $this->schema = new Schema($defaultPlatform);
         $this->defaultPackage = $defaultPackage;
-        $this->encoding = $encoding;
     }
 
     /**
@@ -142,7 +138,7 @@ class SchemaReader
      *
      * @return void
      */
-    public function setGeneratorConfig(GeneratorConfigInterface $generatorConfig)
+    public function setGeneratorConfig(GeneratorConfigInterface $generatorConfig): void
     {
         $this->schema->setGeneratorConfig($generatorConfig);
     }
@@ -155,7 +151,7 @@ class SchemaReader
      *
      * @return \Propel\Generator\Model\Schema|null
      */
-    public function parseFile($xmlFile)
+    public function parseFile(string $xmlFile): ?Schema
     {
         // we don't want infinite recursion
         if ($this->isAlreadyParsed($xmlFile)) {
@@ -176,10 +172,10 @@ class SchemaReader
      *
      * @return \Propel\Generator\Model\Schema|null
      */
-    public function parseString($xmlString, $xmlFile = null)
+    public function parseString(string $xmlString, ?string $xmlFile = null): ?Schema
     {
         // we don't want infinite recursion
-        if ($this->isAlreadyParsed($xmlFile)) {
+        if ($xmlFile && $this->isAlreadyParsed($xmlFile)) {
             return null;
         }
 
@@ -188,17 +184,18 @@ class SchemaReader
         $this->currentXmlFile = $xmlFile;
 
         $parserStash = $this->parser;
+        /** @psalm-suppress InvalidPropertyAssignmentValue */
         $this->parser = xml_parser_create();
         xml_parser_set_option($this->parser, XML_OPTION_CASE_FOLDING, 0);
         xml_set_object($this->parser, $this);
-        xml_set_element_handler($this->parser, 'startElement', 'endElement');
+        xml_set_element_handler($this->parser, [$this, 'startElement'], [$this, 'endElement']);
         if (!xml_parse($this->parser, $xmlString)) {
             throw new SchemaException(
                 sprintf(
                     'XML error: %s at line %d',
                     xml_error_string(xml_get_error_code($this->parser)),
-                    xml_get_current_line_number($this->parser)
-                )
+                    xml_get_current_line_number($this->parser),
+                ),
             );
         }
         xml_parser_free($this->parser);
@@ -218,14 +215,14 @@ class SchemaReader
      *
      * @return void
      */
-    public function startElement($parser, $tagName, $attributes)
+    public function startElement($parser, string $tagName, array $attributes): void
     {
         $parentTag = $this->peekCurrentSchemaTag();
         if ($parentTag === false) {
             switch ($tagName) {
                 case 'database':
                     if ($this->isExternalSchema()) {
-                        $this->currentPackage = isset($attributes['package']) ? $attributes['package'] : null;
+                        $this->currentPackage = $attributes['package'] ?? null;
                         if ($this->currentPackage === null) {
                             $this->currentPackage = $this->defaultPackage;
                         }
@@ -240,19 +237,19 @@ class SchemaReader
         } elseif ($parentTag === 'database') {
             switch ($tagName) {
                 case 'external-schema':
-                    $xmlFile = isset($attributes['filename']) ? $attributes['filename'] : null;
+                    $xmlFile = $attributes['filename'] ?? null;
 
                     // 'referenceOnly' attribute is valid in the main schema XML file only,
                     // and it's ignored in the nested external-schemas
                     if (!$this->isExternalSchema()) {
-                        $isForRefOnly = isset($attributes['referenceOnly']) ? $attributes['referenceOnly'] : null;
+                        $isForRefOnly = $attributes['referenceOnly'] ?? null;
                         $this->isForReferenceOnly = ($isForRefOnly !== null ? (strtolower($isForRefOnly) === 'true') : true); // defaults to TRUE
                     }
 
                     if ($xmlFile[0] !== '/') {
                         $xmlFile = realpath(dirname($this->currentXmlFile) . DIRECTORY_SEPARATOR . $xmlFile);
                         if (!file_exists($xmlFile)) {
-                            throw new SchemaException(sprintf('Unknown include external "%s"', $xmlFile));
+                            throw new SchemaException(sprintf('Unknown include external `%s`', $xmlFile));
                         }
                     }
 
@@ -428,13 +425,13 @@ class SchemaReader
     }
 
     /**
-     * @param string $tag_name
+     * @param string $tagName
      *
      * @return void
      */
-    protected function throwInvalidTagException($tag_name)
+    protected function throwInvalidTagException(string $tagName): void
     {
-        $this->throwSchemaExceptionWithLocation('Unexpected tag <%s>', $tag_name);
+        $this->throwSchemaExceptionWithLocation('Unexpected tag <%s>', $tagName);
     }
 
     /**
@@ -445,7 +442,7 @@ class SchemaReader
      *
      * @return void
      */
-    private function throwSchemaExceptionWithLocation($format, ...$args)
+    private function throwSchemaExceptionWithLocation(string $format, ...$args): void
     {
         $format .= ' in %s';
         $args[] = $this->getLocationDescription();
@@ -459,7 +456,7 @@ class SchemaReader
      *
      * @return string
      */
-    private function getLocationDescription()
+    private function getLocationDescription(): string
     {
         $location = '';
         if ($this->currentXmlFile !== null) {
@@ -480,7 +477,7 @@ class SchemaReader
      *
      * @return void
      */
-    public function endElement($parser, $tagName)
+    public function endElement($parser, string $tagName): void
     {
         if ($tagName === 'index') {
             $this->currTable->addIndex($this->currIndex);
@@ -524,7 +521,7 @@ class SchemaReader
      *
      * @return void
      */
-    protected function pushCurrentSchemaTag($tag)
+    protected function pushCurrentSchemaTag(string $tag): void
     {
         $keys = array_keys($this->schemasTagsStack);
         $this->schemasTagsStack[end($keys)][] = $tag;
@@ -533,7 +530,7 @@ class SchemaReader
     /**
      * @return bool
      */
-    protected function isExternalSchema()
+    protected function isExternalSchema(): bool
     {
         return count($this->schemasTagsStack) > 1;
     }
@@ -543,7 +540,7 @@ class SchemaReader
      *
      * @return bool
      */
-    protected function isAlreadyParsed($filePath)
+    protected function isAlreadyParsed(string $filePath): bool
     {
         return isset($this->schemasTagsStack[$filePath]);
     }
@@ -580,7 +577,7 @@ class SchemaReader
      *
      * @return void
      */
-    private function addAttributeToParameterListItem(array $attributes)
+    private function addAttributeToParameterListItem(array $attributes): void
     {
         $name = $this->getExpectedValue($attributes, 'name');
         $value = $this->getExpectedValue($attributes, 'value');

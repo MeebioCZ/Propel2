@@ -11,10 +11,13 @@ namespace Propel\Runtime\Connection;
 use IteratorAggregate;
 use PDO;
 use PDOStatement;
+use Propel\Runtime\DataFetcher\DataFetcherInterface;
 use Traversable;
 
 /**
  * Wraps a Statement class, providing logging.
+ *
+ * @implements \IteratorAggregate<int|string, mixed>
  */
 class StatementWrapper implements StatementInterface, IteratorAggregate
 {
@@ -38,7 +41,7 @@ class StatementWrapper implements StatementInterface, IteratorAggregate
      *
      * @see self::bindValue()
      *
-     * @var string[]
+     * @var array<string>
      */
     protected static $typeMap = [
         0 => 'PDO::PARAM_NULL',
@@ -49,7 +52,7 @@ class StatementWrapper implements StatementInterface, IteratorAggregate
     ];
 
     /**
-     * @var array The values that have been bound
+     * @var array<string, mixed> The values that have been bound
      */
     protected $boundValues = [];
 
@@ -64,7 +67,7 @@ class StatementWrapper implements StatementInterface, IteratorAggregate
      * @param string $sql The SQL query for this statement
      * @param \Propel\Runtime\Connection\ConnectionWrapper $connection The parent connection
      */
-    public function __construct($sql, ConnectionWrapper $connection)
+    public function __construct(string $sql, ConnectionWrapper $connection)
     {
         $this->connection = $connection;
         $this->sql = $sql;
@@ -75,7 +78,7 @@ class StatementWrapper implements StatementInterface, IteratorAggregate
      *
      * @return $this
      */
-    public function prepare($options)
+    public function prepare(array $options)
     {
         /** @var \PDOStatement $statement */
         $statement = $this->connection->getWrappedConnection()->prepare($this->sql, $options);
@@ -87,9 +90,9 @@ class StatementWrapper implements StatementInterface, IteratorAggregate
     /**
      * @return \Propel\Runtime\DataFetcher\DataFetcherInterface
      */
-    public function query()
+    public function query(): DataFetcherInterface
     {
-        if ($this->connection->useDebug) {
+        if ($this->connection->isInDebugMode()) {
             $callback = [$this->connection->getWrappedConnection(), 'query'];
             $statement = $this->connection->callUserFunctionWithLogging($callback, [$this->sql], $this->sql);
         } else {
@@ -106,20 +109,20 @@ class StatementWrapper implements StatementInterface, IteratorAggregate
      * as a reference and will only be evaluated at the time that PDOStatement::execute() is called.
      * Returns a boolean value indicating success.
      *
-     * @param int $parameter Parameter identifier (for determining what to replace in the query).
+     * @param mixed $parameter Parameter identifier (for determining what to replace in the query).
      * @param mixed $variable The value to bind to the parameter.
      * @param int $dataType Explicit data type for the parameter using the PDO::PARAM_* constants. Defaults to PDO::PARAM_STR.
-     * @param int $length Length of the data type. To indicate that a parameter is an OUT parameter from a stored procedure, you must explicitly set the length.
+     * @param int|null $length Length of the data type. To indicate that a parameter is an OUT parameter from a stored procedure, you must explicitly set the length.
      * @param mixed $driverOptions
      *
      * @return bool
      */
-    public function bindParam($parameter, &$variable, $dataType = PDO::PARAM_STR, $length = 0, $driverOptions = null)
+    public function bindParam($parameter, &$variable, int $dataType = PDO::PARAM_STR, ?int $length = null, $driverOptions = null): bool
     {
-        $return = $this->statement->bindParam($parameter, $variable, $dataType, $length, $driverOptions);
-        if ($this->connection->useDebug) {
-            $typestr = isset(self::$typeMap[$dataType]) ? self::$typeMap[$dataType] : '(default)';
-            $valuestr = $length > 100 ? '[Large value]' : var_export($variable, true);
+        $return = $this->statement->bindParam($parameter, $variable, $dataType, (int)$length, $driverOptions);
+        if ($this->connection->isInDebugMode()) {
+            $typestr = self::$typeMap[$dataType] ?? '(default)';
+            $valuestr = (int)$length > 100 ? '[Large value]' : var_export($variable, true);
             $this->boundValues[$parameter] = $valuestr;
             $msg = sprintf('Binding %s at position %s w/ PDO type %s', $valuestr, $parameter, $typestr);
             $this->connection->log($msg);
@@ -132,17 +135,17 @@ class StatementWrapper implements StatementInterface, IteratorAggregate
      * Binds a value to a corresponding named or question mark placeholder in the SQL statement
      * that was use to prepare the statement. Returns a boolean value indicating success.
      *
-     * @param int $parameter Parameter identifier (for determining what to replace in the query).
+     * @param mixed $parameter Parameter identifier (for determining what to replace in the query).
      * @param mixed $value The value to bind to the parameter.
      * @param int $dataType Explicit data type for the parameter using the PDO::PARAM_* constants. Defaults to PDO::PARAM_STR.
      *
      * @return bool
      */
-    public function bindValue($parameter, $value, $dataType = PDO::PARAM_STR)
+    public function bindValue($parameter, $value, int $dataType = PDO::PARAM_STR): bool
     {
         $return = $this->statement->bindValue($parameter, $value, $dataType);
-        if ($this->connection->useDebug) {
-            $typestr = isset(self::$typeMap[$dataType]) ? self::$typeMap[$dataType] : '(default)';
+        if ($this->connection->isInDebugMode()) {
+            $typestr = self::$typeMap[$dataType] ?? '(default)';
             $valuestr = $dataType == PDO::PARAM_LOB ? '[LOB value]' : var_export($value, true);
             $this->boundValues[$parameter] = $valuestr;
             $msg = sprintf('Binding %s at position %s w/ PDO type %s', $valuestr, $parameter, $typestr);
@@ -166,7 +169,7 @@ class StatementWrapper implements StatementInterface, IteratorAggregate
      *
      * @return bool Returns TRUE on success or FALSE on failure.
      */
-    public function closeCursor()
+    public function closeCursor(): bool
     {
         return $this->statement->closeCursor();
     }
@@ -188,7 +191,7 @@ class StatementWrapper implements StatementInterface, IteratorAggregate
      * by the PDOStatement object. If there is no result set,
      * this method should return 0.
      */
-    public function columnCount()
+    public function columnCount(): int
     {
         return $this->statement->columnCount();
     }
@@ -203,9 +206,9 @@ class StatementWrapper implements StatementInterface, IteratorAggregate
      *
      * @return bool
      */
-    public function execute($inputParameters = null)
+    public function execute(?array $inputParameters = null): bool
     {
-        if ($this->connection->useDebug) {
+        if ($this->connection->isInDebugMode()) {
             $sql = $this->getExecutedQueryString($inputParameters);
             $args = ($inputParameters !== null) ? [$inputParameters] : [];
 
@@ -243,7 +246,7 @@ class StatementWrapper implements StatementInterface, IteratorAggregate
      *
      * @return mixed
      */
-    public function fetch($fetchStyle = PDO::FETCH_BOTH, $cursorOrientation = PDO::FETCH_ORI_NEXT, $cursorOffset = 0)
+    public function fetch(int $fetchStyle = PDO::FETCH_BOTH, int $cursorOrientation = PDO::FETCH_ORI_NEXT, int $cursorOffset = 0)
     {
         return $this->statement->fetch($fetchStyle);
     }
@@ -257,7 +260,7 @@ class StatementWrapper implements StatementInterface, IteratorAggregate
      *
      * @return array
      */
-    public function fetchAll($fetchStyle = PDO::FETCH_BOTH, $fetchArgument = null, $ctorArgs = [])
+    public function fetchAll(?int $fetchStyle = PDO::FETCH_BOTH, $fetchArgument = null, array $ctorArgs = []): array
     {
         return $this->statement->fetchAll($fetchStyle);
     }
@@ -271,9 +274,11 @@ class StatementWrapper implements StatementInterface, IteratorAggregate
      *
      * @return string|null A single column in the next row of a result set.
      */
-    public function fetchColumn($columnIndex = 0)
+    public function fetchColumn(int $columnIndex = 0): ?string
     {
-        return $this->statement->fetchColumn($columnIndex);
+        $output = $this->statement->fetchColumn($columnIndex);
+
+        return $output === null ? null : (string)$output;
     }
 
     /**
@@ -289,7 +294,7 @@ class StatementWrapper implements StatementInterface, IteratorAggregate
      *
      * @return int The number of rows.
      */
-    public function rowCount()
+    public function rowCount(): int
     {
         return $this->statement->rowCount();
     }
@@ -307,7 +312,7 @@ class StatementWrapper implements StatementInterface, IteratorAggregate
     /**
      * @return \Propel\Runtime\Connection\ConnectionWrapper
      */
-    public function getConnection()
+    public function getConnection(): ConnectionWrapper
     {
         return $this->connection;
     }
@@ -315,7 +320,7 @@ class StatementWrapper implements StatementInterface, IteratorAggregate
     /**
      * @return \PDOStatement
      */
-    public function getStatement()
+    public function getStatement(): PDOStatement
     {
         return $this->statement;
     }
@@ -325,7 +330,7 @@ class StatementWrapper implements StatementInterface, IteratorAggregate
      *
      * @return void
      */
-    public function setStatement(PDOStatement $statement)
+    public function setStatement(PDOStatement $statement): void
     {
         $this->statement = $statement;
     }
@@ -333,7 +338,7 @@ class StatementWrapper implements StatementInterface, IteratorAggregate
     /**
      * @return array
      */
-    public function getBoundValues()
+    public function getBoundValues(): array
     {
         return $this->boundValues;
     }
@@ -341,7 +346,7 @@ class StatementWrapper implements StatementInterface, IteratorAggregate
     /**
      * @inheritDoc
      */
-    public function bindColumn($column, &$param, $type = null, $maxlen = null, $driverdata = null)
+    public function bindColumn($column, &$param, $type = null, $maxlen = null, $driverdata = null): bool
     {
         return $this->statement->bindColumn($column, $param, $type, $maxlen, $driverdata);
     }
@@ -357,7 +362,7 @@ class StatementWrapper implements StatementInterface, IteratorAggregate
     /**
      * @inheritDoc
      */
-    public function errorCode()
+    public function errorCode(): string
     {
         return $this->statement->errorCode();
     }
@@ -365,7 +370,7 @@ class StatementWrapper implements StatementInterface, IteratorAggregate
     /**
      * @inheritDoc
      */
-    public function errorInfo()
+    public function errorInfo(): array
     {
         return $this->statement->errorInfo();
     }
@@ -373,7 +378,7 @@ class StatementWrapper implements StatementInterface, IteratorAggregate
     /**
      * @inheritDoc
      */
-    public function setAttribute($attribute, $value)
+    public function setAttribute($attribute, $value): bool
     {
         return $this->statement->setAttribute($attribute, $value);
     }
@@ -397,7 +402,7 @@ class StatementWrapper implements StatementInterface, IteratorAggregate
     /**
      * @inheritDoc
      */
-    public function setFetchMode($mode, $classNameObject = null, array $ctorarfg = [])
+    public function setFetchMode($mode, $classNameObject = null, array $ctorarfg = []): bool
     {
         switch (func_num_args()) {
             case 1:
@@ -414,7 +419,7 @@ class StatementWrapper implements StatementInterface, IteratorAggregate
     /**
      * @inheritDoc
      */
-    public function nextRowset()
+    public function nextRowset(): bool
     {
         return $this->statement->nextRowset();
     }

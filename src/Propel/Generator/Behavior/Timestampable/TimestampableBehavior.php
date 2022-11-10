@@ -8,6 +8,7 @@
 
 namespace Propel\Generator\Behavior\Timestampable;
 
+use Propel\Generator\Builder\Om\AbstractOMBuilder;
 use Propel\Generator\Model\Behavior;
 
 /**
@@ -19,7 +20,7 @@ use Propel\Generator\Model\Behavior;
 class TimestampableBehavior extends Behavior
 {
     /**
-     * @var string[]
+     * @var array<string, mixed>
      */
     protected $parameters = [
         'create_column' => 'created_at',
@@ -31,7 +32,7 @@ class TimestampableBehavior extends Behavior
     /**
      * @return bool
      */
-    protected function withUpdatedAt()
+    protected function withUpdatedAt(): bool
     {
         return !$this->booleanValue($this->getParameter('disable_updated_at'));
     }
@@ -39,7 +40,7 @@ class TimestampableBehavior extends Behavior
     /**
      * @return bool
      */
-    protected function withCreatedAt()
+    protected function withCreatedAt(): bool
     {
         return !$this->booleanValue($this->getParameter('disable_created_at'));
     }
@@ -49,7 +50,7 @@ class TimestampableBehavior extends Behavior
      *
      * @return void
      */
-    public function modifyTable()
+    public function modifyTable(): void
     {
         $table = $this->getTable();
 
@@ -74,7 +75,7 @@ class TimestampableBehavior extends Behavior
      *
      * @return string The related setter, 'setCreatedOn' or 'setUpdatedOn'
      */
-    protected function getColumnSetter($column)
+    protected function getColumnSetter(string $column): string
     {
         return 'set' . $this->getColumnForParameter($column)->getPhpName();
     }
@@ -85,7 +86,7 @@ class TimestampableBehavior extends Behavior
      *
      * @return string
      */
-    protected function getColumnConstant($columnName, $builder)
+    protected function getColumnConstant(string $columnName, AbstractOMBuilder $builder): string
     {
         return $builder->getColumnConstant($this->getColumnForParameter($columnName));
     }
@@ -97,7 +98,7 @@ class TimestampableBehavior extends Behavior
      *
      * @return string The code to put at the hook
      */
-    public function preUpdate($builder)
+    public function preUpdate(AbstractOMBuilder $builder): string
     {
         if ($this->withUpdatedAt()) {
             $valueSource = strtoupper($this->getTable()->getColumn($this->getParameter('update_column'))->getType()) === 'INTEGER'
@@ -119,7 +120,7 @@ class TimestampableBehavior extends Behavior
      *
      * @return string The code to put at the hook
      */
-    public function preInsert($builder)
+    public function preInsert(AbstractOMBuilder $builder): string
     {
         $script = '$time = time();
 $highPrecision = \\Propel\\Runtime\\Util\\PropelDateTime::createHighPrecision();';
@@ -152,7 +153,7 @@ if (!\$this->isColumnModified(" . $this->getColumnConstant('update_column', $bui
      *
      * @return string
      */
-    public function objectMethods($builder)
+    public function objectMethods(AbstractOMBuilder $builder): string
     {
         if (!$this->withUpdatedAt()) {
             return '';
@@ -162,7 +163,7 @@ if (!\$this->isColumnModified(" . $this->getColumnConstant('update_column', $bui
 /**
  * Mark the current object so that the update date doesn't get updated during next save
  *
- * @return     \$this|" . $builder->getObjectClassName() . " The current object (for fluent API support)
+ * @return \$this The current object (for fluent API support)
  */
 public function keepUpdateDateUnchanged()
 {
@@ -178,7 +179,7 @@ public function keepUpdateDateUnchanged()
      *
      * @return string
      */
-    public function queryMethods($builder)
+    public function queryMethods(AbstractOMBuilder $builder): string
     {
         $queryClassName = $builder->getQueryClassName();
 
@@ -190,33 +191,39 @@ public function keepUpdateDateUnchanged()
 /**
  * Filter by the latest updated
  *
- * @param      int \$nbDays Maximum age of the latest update in days
+ * @param int \$nbDays Maximum age of the latest update in days
  *
- * @return     \$this|$queryClassName The current query, for fluid interface
+ * @return \$this The current query, for fluid interface
  */
 public function recentlyUpdated(\$nbDays = 7)
 {
-    return \$this->addUsingAlias($updateColumnConstant, time() - \$nbDays * 24 * 60 * 60, Criteria::GREATER_EQUAL);
+    \$this->addUsingAlias($updateColumnConstant, time() - \$nbDays * 24 * 60 * 60, Criteria::GREATER_EQUAL);
+
+    return \$this;
 }
 
 /**
  * Order by update date desc
  *
- * @return     \$this|$queryClassName The current query, for fluid interface
+ * @return \$this The current query, for fluid interface
  */
 public function lastUpdatedFirst()
 {
-    return \$this->addDescendingOrderByColumn($updateColumnConstant);
+    \$this->addDescendingOrderByColumn($updateColumnConstant);
+
+    return \$this;
 }
 
 /**
  * Order by update date asc
  *
- * @return     \$this|$queryClassName The current query, for fluid interface
+ * @return \$this The current query, for fluid interface
  */
 public function firstUpdatedFirst()
 {
-    return \$this->addAscendingOrderByColumn($updateColumnConstant);
+    \$this->addAscendingOrderByColumn($updateColumnConstant);
+
+    return \$this;
 }
 ";
         }
@@ -227,33 +234,39 @@ public function firstUpdatedFirst()
 /**
  * Order by create date desc
  *
- * @return     \$this|$queryClassName The current query, for fluid interface
+ * @return \$this The current query, for fluid interface
  */
 public function lastCreatedFirst()
 {
-    return \$this->addDescendingOrderByColumn($createColumnConstant);
+    \$this->addDescendingOrderByColumn($createColumnConstant);
+
+    return \$this;
 }
 
 /**
  * Filter by the latest created
  *
- * @param      int \$nbDays Maximum age of in days
+ * @param int \$nbDays Maximum age of in days
  *
- * @return     \$this|$queryClassName The current query, for fluid interface
+ * @return \$this The current query, for fluid interface
  */
 public function recentlyCreated(\$nbDays = 7)
 {
-    return \$this->addUsingAlias($createColumnConstant, time() - \$nbDays * 24 * 60 * 60, Criteria::GREATER_EQUAL);
+    \$this->addUsingAlias($createColumnConstant, time() - \$nbDays * 24 * 60 * 60, Criteria::GREATER_EQUAL);
+
+    return \$this;
 }
 
 /**
  * Order by create date asc
  *
- * @return     \$this|$queryClassName The current query, for fluid interface
+ * @return \$this The current query, for fluid interface
  */
 public function firstCreatedFirst()
 {
-    return \$this->addAscendingOrderByColumn($createColumnConstant);
+    \$this->addAscendingOrderByColumn($createColumnConstant);
+
+    return \$this;
 }
 ";
         }

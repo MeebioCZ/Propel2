@@ -30,7 +30,7 @@ class QueryBuilder extends AbstractOMBuilder
      *
      * @return string
      */
-    public function getPackage()
+    public function getPackage(): string
     {
         return parent::getPackage() . '.Base';
     }
@@ -38,9 +38,9 @@ class QueryBuilder extends AbstractOMBuilder
     /**
      * Returns the namepace for the query object classes.
      *
-     * @return string
+     * @return string|null
      */
-    public function getNamespace()
+    public function getNamespace(): ?string
     {
         if ($namespace = parent::getNamespace()) {
                 return $namespace . '\\Base';
@@ -54,7 +54,7 @@ class QueryBuilder extends AbstractOMBuilder
      *
      * @return string
      */
-    public function getUnprefixedClassName()
+    public function getUnprefixedClassName(): string
     {
         return $this->getStubQueryBuilder()->getUnprefixedClassName();
     }
@@ -64,7 +64,7 @@ class QueryBuilder extends AbstractOMBuilder
      *
      * @return string
      */
-    public function getParentClass()
+    public function getParentClass(): string
     {
         $parentClass = $this->getBehaviorContent('parentClass');
         if ($parentClass) {
@@ -86,7 +86,7 @@ class QueryBuilder extends AbstractOMBuilder
      *
      * @return void
      */
-    protected function addClassOpen(&$script)
+    protected function addClassOpen(string &$script): void
     {
         $table = $this->getTable();
         $tableName = $table->getName();
@@ -183,7 +183,7 @@ class QueryBuilder extends AbstractOMBuilder
             $relationQueryClasses[$this->getNewStubQueryBuilder($refFK->getTable())->getQueryClassName(true)] = true;
         }
 
-        if (!empty($relationQueryClasses)) {
+        if ($relationQueryClasses) {
             $relationQueryClasses = implode('|', array_keys($relationQueryClasses));
             $script .= "
  * @method     $relationQueryClasses endUse() Finalizes a secondary criteria and merges it with its primary Criteria
@@ -192,8 +192,8 @@ class QueryBuilder extends AbstractOMBuilder
 
         // override the signature of ModelCriteria::findOne() to specify the class of the returned object, for IDE completion
         $script .= "
- * @method     $modelClass|null findOne(ConnectionInterface \$con = null) Return the first $modelClass matching the query
- * @method     $modelClass findOneOrCreate(ConnectionInterface \$con = null) Return the first $modelClass matching the query, or a new $modelClass object populated from the query conditions when no match is found
+ * @method     $modelClass|null findOne(?ConnectionInterface \$con = null) Return the first $modelClass matching the query
+ * @method     $modelClass findOneOrCreate(?ConnectionInterface \$con = null) Return the first $modelClass matching the query, or a new $modelClass object populated from the query conditions when no match is found
  *";
 
         // magic findBy() methods, for IDE completion
@@ -211,8 +211,8 @@ class QueryBuilder extends AbstractOMBuilder
 
         // override the signature of ModelCriteria::require*() to specify the class of the returned object, for IDE completion
         $script .= "
- * @method     $modelClass requirePk(\$key, ConnectionInterface \$con = null) Return the $modelClass by primary key and throws {$this->getEntityNotFoundExceptionClass()} when not found
- * @method     $modelClass requireOne(ConnectionInterface \$con = null) Return the first $modelClass matching the query and throws {$this->getEntityNotFoundExceptionClass()} when not found
+ * @method     $modelClass requirePk(\$key, ?ConnectionInterface \$con = null) Return the $modelClass by primary key and throws {$this->getEntityNotFoundExceptionClass()} when not found
+ * @method     $modelClass requireOne(?ConnectionInterface \$con = null) Return the first $modelClass matching the query and throws {$this->getEntityNotFoundExceptionClass()} when not found
  *";
 
         // magic requireOneBy() methods, for IDE completion
@@ -223,17 +223,17 @@ class QueryBuilder extends AbstractOMBuilder
 
         $script .= "
  *
- * @method     {$modelClass}[]|ObjectCollection find(ConnectionInterface \$con = null) Return $modelClass objects based on current ModelCriteria
- * @psalm-method ObjectCollection&\Traversable<{$modelClass}> find(ConnectionInterface \$con = null) Return $modelClass objects based on current ModelCriteria";
+ * @method     {$modelClass}[]|Collection find(?ConnectionInterface \$con = null) Return $modelClass objects based on current ModelCriteria
+ * @psalm-method Collection&\Traversable<{$modelClass}> find(?ConnectionInterface \$con = null) Return $modelClass objects based on current ModelCriteria";
         foreach ($this->getTable()->getColumns() as $column) {
             $script .= "
- * @method     {$modelClass}[]|ObjectCollection findBy" . $column->getPhpName() . '(' . $column->getPhpType() . ' $' . $column->getName() . ") Return $modelClass objects filtered by the " . $column->getName() . ' column' . "
- * @psalm-method ObjectCollection&\Traversable<{$modelClass}> findBy" . $column->getPhpName() . '(' . $column->getPhpType() . ' $' . $column->getName() . ") Return $modelClass objects filtered by the " . $column->getName() . ' column';
+ * @method     {$modelClass}[]|Collection findBy" . $column->getPhpName() . '(' . $column->getPhpType() . ' $' . $column->getName() . ") Return $modelClass objects filtered by the " . $column->getName() . ' column' . "
+ * @psalm-method Collection&\Traversable<{$modelClass}> findBy" . $column->getPhpName() . '(' . $column->getPhpType() . ' $' . $column->getName() . ") Return $modelClass objects filtered by the " . $column->getName() . ' column';
         }
 
         $script .= "
- * @method     {$modelClass}[]|\\Propel\\Runtime\\Util\\PropelModelPager paginate(\$page = 1, \$maxPerPage = 10, ConnectionInterface \$con = null) Issue a SELECT query based on the current ModelCriteria and uses a page and a maximum number of results per page to compute an offset and a limit
- * @psalm-method \\Propel\\Runtime\\Util\\PropelModelPager&\Traversable<{$modelClass}> paginate(\$page = 1, \$maxPerPage = 10, ConnectionInterface \$con = null) Issue a SELECT query based on the current ModelCriteria and uses a page and a maximum number of results per page to compute an offset and a limit
+ * @method     {$modelClass}[]|\\Propel\\Runtime\\Util\\PropelModelPager paginate(\$page = 1, \$maxPerPage = 10, ?ConnectionInterface \$con = null) Issue a SELECT query based on the current ModelCriteria and uses a page and a maximum number of results per page to compute an offset and a limit
+ * @psalm-method \\Propel\\Runtime\\Util\\PropelModelPager&\Traversable<{$modelClass}> paginate(\$page = 1, \$maxPerPage = 10, ?ConnectionInterface \$con = null) Issue a SELECT query based on the current ModelCriteria and uses a page and a maximum number of results per page to compute an offset and a limit
  *
  */
 abstract class " . $this->getUnqualifiedClassName() . ' extends ' . $parentClass . "
@@ -253,7 +253,7 @@ abstract class " . $this->getUnqualifiedClassName() . ' extends ' . $parentClass
      *
      * @return void
      */
-    protected function addClassBody(&$script)
+    protected function addClassBody(string &$script): void
     {
         $table = $this->getTable();
 
@@ -264,7 +264,7 @@ abstract class " . $this->getUnqualifiedClassName() . ' extends ' . $parentClass
             '\Propel\Runtime\ActiveQuery\Criteria',
             '\Propel\Runtime\ActiveQuery\ModelJoin',
             '\Exception',
-            '\Propel\Runtime\Exception\PropelException'
+            '\Propel\Runtime\Exception\PropelException',
         );
         $this->declareClassFromBuilder($this->getStubQueryBuilder(), 'Child');
         $this->declareClassFromBuilder($this->getTableMapBuilder());
@@ -330,7 +330,7 @@ abstract class " . $this->getUnqualifiedClassName() . ' extends ' . $parentClass
      *
      * @return void
      */
-    protected function addEntityNotFoundExceptionClass(&$script)
+    protected function addEntityNotFoundExceptionClass(string &$script): void
     {
         $script .= "protected \$entityNotFoundExceptionClass = '" . addslashes($this->getEntityNotFoundExceptionClass()) . "';\n";
     }
@@ -338,7 +338,7 @@ abstract class " . $this->getUnqualifiedClassName() . ' extends ' . $parentClass
     /**
      * @return string|null
      */
-    private function getEntityNotFoundExceptionClass()
+    private function getEntityNotFoundExceptionClass(): ?string
     {
         return $this->getBuildProperty('generator.objectModel.entityNotFoundExceptionClass');
     }
@@ -350,7 +350,7 @@ abstract class " . $this->getUnqualifiedClassName() . ' extends ' . $parentClass
      *
      * @return void
      */
-    protected function addDeleteMethods(&$script)
+    protected function addDeleteMethods(string &$script): void
     {
         $this->addDoDeleteAll($script);
         $this->addDelete($script);
@@ -369,7 +369,7 @@ abstract class " . $this->getUnqualifiedClassName() . ' extends ' . $parentClass
      *
      * @return bool
      */
-    protected function isDeleteCascadeEmulationNeeded()
+    protected function isDeleteCascadeEmulationNeeded(): bool
     {
         $table = $this->getTable();
         if ((!$this->getPlatform()->supportsNativeDeleteTrigger() || $this->getBuildProperty('generator.objectModel.emulateForeignKeyConstraints')) && count($table->getReferrers()) > 0) {
@@ -388,7 +388,7 @@ abstract class " . $this->getUnqualifiedClassName() . ' extends ' . $parentClass
      *
      * @return bool
      */
-    protected function isDeleteSetNullEmulationNeeded()
+    protected function isDeleteSetNullEmulationNeeded(): bool
     {
         $table = $this->getTable();
         if ((!$this->getPlatform()->supportsNativeDeleteTrigger() || $this->getBuildProperty('generator.objectModel.emulateForeignKeyConstraints')) && count($table->getReferrers()) > 0) {
@@ -409,10 +409,10 @@ abstract class " . $this->getUnqualifiedClassName() . ' extends ' . $parentClass
      *
      * @return void
      */
-    protected function addClassClose(&$script)
+    protected function addClassClose(string &$script): void
     {
         $script .= "
-} // " . $this->getUnqualifiedClassName() . "
+}
 ";
         $this->applyBehaviorModifier('queryFilter', $script, '');
     }
@@ -426,7 +426,7 @@ abstract class " . $this->getUnqualifiedClassName() . ' extends ' . $parentClass
      *
      * @return void
      */
-    protected function addConstructor(&$script)
+    protected function addConstructor(string &$script): void
     {
         $this->addConstructorComment($script);
         $this->addConstructorOpen($script);
@@ -441,15 +441,15 @@ abstract class " . $this->getUnqualifiedClassName() . ' extends ' . $parentClass
      *
      * @return void
      */
-    protected function addConstructorComment(&$script)
+    protected function addConstructorComment(string &$script): void
     {
         $script .= "
     /**
      * Initializes internal state of " . $this->getClassName() . " object.
      *
-     * @param     string \$dbName The database name
-     * @param     string \$modelName The phpName of a model, e.g. 'Book'
-     * @param     string \$modelAlias The alias for the model in this query, e.g. 'b'
+     * @param string \$dbName The database name
+     * @param string \$modelName The phpName of a model, e.g. 'Book'
+     * @param string \$modelAlias The alias for the model in this query, e.g. 'b'
      */";
     }
 
@@ -460,7 +460,7 @@ abstract class " . $this->getUnqualifiedClassName() . ' extends ' . $parentClass
      *
      * @return void
      */
-    protected function addConstructorOpen(&$script)
+    protected function addConstructorOpen(string &$script): void
     {
         $table = $this->getTable();
         $script .= "
@@ -475,7 +475,7 @@ abstract class " . $this->getUnqualifiedClassName() . ' extends ' . $parentClass
      *
      * @return void
      */
-    protected function addConstructorBody(&$script)
+    protected function addConstructorBody(string &$script): void
     {
         $script .= "
         parent::__construct(\$dbName, \$modelName, \$modelAlias);";
@@ -488,7 +488,7 @@ abstract class " . $this->getUnqualifiedClassName() . ' extends ' . $parentClass
      *
      * @return void
      */
-    protected function addConstructorClose(&$script)
+    protected function addConstructorClose(string &$script): void
     {
         $script .= "
     }
@@ -502,7 +502,7 @@ abstract class " . $this->getUnqualifiedClassName() . ' extends ' . $parentClass
      *
      * @return void
      */
-    protected function addFactory(&$script)
+    protected function addFactory(string &$script): void
     {
         $this->addFactoryComment($script);
         $this->addFactoryOpen($script);
@@ -517,15 +517,15 @@ abstract class " . $this->getUnqualifiedClassName() . ' extends ' . $parentClass
      *
      * @return void
      */
-    protected function addFactoryComment(&$script)
+    protected function addFactoryComment(string &$script): void
     {
         $classname = $this->getClassNameFromBuilder($this->getNewStubQueryBuilder($this->getTable()));
         $script .= "
     /**
      * Returns a new " . $classname . " object.
      *
-     * @param     string \$modelAlias The alias of a model in the query
-     * @param     Criteria \$criteria Optional Criteria to build the query from
+     * @param string \$modelAlias The alias of a model in the query
+     * @param Criteria \$criteria Optional Criteria to build the query from
      *
      * @return " . $classname . "
      */";
@@ -538,10 +538,10 @@ abstract class " . $this->getUnqualifiedClassName() . ' extends ' . $parentClass
      *
      * @return void
      */
-    protected function addFactoryOpen(&$script)
+    protected function addFactoryOpen(string &$script): void
     {
         $script .= "
-    public static function create(\$modelAlias = null, Criteria \$criteria = null)
+    public static function create(?string \$modelAlias = null, ?Criteria \$criteria = null): Criteria
     {";
     }
 
@@ -552,7 +552,7 @@ abstract class " . $this->getUnqualifiedClassName() . ' extends ' . $parentClass
      *
      * @return void
      */
-    protected function addFactoryBody(&$script)
+    protected function addFactoryBody(string &$script): void
     {
         $classname = $this->getClassNameFromBuilder($this->getNewStubQueryBuilder($this->getTable()));
         $script .= "
@@ -577,7 +577,7 @@ abstract class " . $this->getUnqualifiedClassName() . ' extends ' . $parentClass
      *
      * @return void
      */
-    protected function addFactoryClose(&$script)
+    protected function addFactoryClose(string &$script): void
     {
         $script .= "
     }
@@ -589,7 +589,7 @@ abstract class " . $this->getUnqualifiedClassName() . ' extends ' . $parentClass
      *
      * @return void
      */
-    protected function addFindPk(&$script)
+    protected function addFindPk(string &$script): void
     {
         $class = $this->getObjectClassName();
         $tableMapClassName = $this->getTableMapClassName();
@@ -626,7 +626,7 @@ abstract class " . $this->getUnqualifiedClassName() . ' extends ' . $parentClass
      *
      * @return $class|array|mixed the result, formatted by the current formatter
      */
-    public function findPk(\$key, ConnectionInterface \$con = null)
+    public function findPk(\$key, ?ConnectionInterface \$con = null)
     {";
         if (!$table->hasPrimaryKey()) {
             $this->declareClass('Propel\\Runtime\\Exception\\LogicException');
@@ -659,7 +659,7 @@ abstract class " . $this->getUnqualifiedClassName() . ' extends ' . $parentClass
         \$this->basePreSelect(\$con);
 
         if (
-            \$this->formatter || \$this->modelAlias || \$this->with
+            \$this->formatter || \$this->modelAlias || \$this->with || \$this->select
             || \$this->selectColumns || \$this->asColumns || \$this->selectModifiers
             || \$this->map || \$this->having || \$this->joins
         ) {
@@ -681,7 +681,7 @@ abstract class " . $this->getUnqualifiedClassName() . ' extends ' . $parentClass
      *
      * @return void
      */
-    protected function addFindPkSimple(&$script)
+    protected function addFindPkSimple(string &$script): void
     {
         $table = $this->getTable();
 
@@ -722,7 +722,7 @@ abstract class " . $this->getUnqualifiedClassName() . ' extends ' . $parentClass
             'SELECT %s FROM %s WHERE %s',
             implode(', ', $selectColumns),
             $this->quoteIdentifier($table->getName()),
-            implode(' AND ', $conditions)
+            implode(' AND ', $conditions),
         );
         $pks = [];
         if ($table->hasCompositePrimaryKey()) {
@@ -739,8 +739,8 @@ abstract class " . $this->getUnqualifiedClassName() . ' extends ' . $parentClass
      * Find object by primary key using raw SQL to go fast.
      * Bypass doSelect() and the object formatter by using generated code.
      *
-     * @param     mixed \$key Primary key to use for the query
-     * @param     ConnectionInterface \$con A connection object
+     * @param mixed \$key Primary key to use for the query
+     * @param ConnectionInterface \$con A connection object
      *
      * @throws \\Propel\\Runtime\\Exception\\PropelException
      *
@@ -797,7 +797,7 @@ abstract class " . $this->getUnqualifiedClassName() . ' extends ' . $parentClass
      *
      * @return void
      */
-    protected function addFindPkComplex(&$script)
+    protected function addFindPkComplex(string &$script): void
     {
         $class = $this->getObjectClassName();
         $table = $this->getTable();
@@ -812,8 +812,8 @@ abstract class " . $this->getUnqualifiedClassName() . ' extends ' . $parentClass
     /**
      * Find object by primary key.
      *
-     * @param     mixed \$key Primary key to use for the query
-     * @param     ConnectionInterface \$con A connection object
+     * @param mixed \$key Primary key to use for the query
+     * @param ConnectionInterface \$con A connection object
      *
      * @return " . $class . "|array|mixed the result, formatted by the current formatter
      */
@@ -837,12 +837,12 @@ abstract class " . $this->getUnqualifiedClassName() . ' extends ' . $parentClass
      *
      * @return void
      */
-    protected function addFindPks(&$script)
+    protected function addFindPks(string &$script): void
     {
         $this->declareClasses(
-            '\Propel\Runtime\Collection\ObjectCollection',
+            '\Propel\Runtime\Collection\Collection',
             '\Propel\Runtime\Connection\ConnectionInterface',
-            '\Propel\Runtime\Propel'
+            '\Propel\Runtime\Propel',
         );
         $table = $this->getTable();
         $pks = $table->getPrimaryKey();
@@ -860,12 +860,12 @@ abstract class " . $this->getUnqualifiedClassName() . ' extends ' . $parentClass
         }
         $script .= "
      * </code>
-     * @param     array \$keys Primary keys to use for the query
-     * @param     ConnectionInterface \$con an optional connection object
+     * @param array \$keys Primary keys to use for the query
+     * @param ConnectionInterface \$con an optional connection object
      *
-     * @return ObjectCollection|array|mixed the list of results, formatted by the current formatter
+     * @return Collection|array|mixed the list of results, formatted by the current formatter
      */
-    public function findPks(\$keys, ConnectionInterface \$con = null)
+    public function findPks(\$keys, ?ConnectionInterface \$con = null)
     {";
         if (!$table->hasPrimaryKey()) {
             $this->declareClass('Propel\\Runtime\\Exception\\LogicException');
@@ -899,15 +899,15 @@ abstract class " . $this->getUnqualifiedClassName() . ' extends ' . $parentClass
      *
      * @return void
      */
-    protected function addFilterByPrimaryKey(&$script)
+    protected function addFilterByPrimaryKey(string &$script): void
     {
         $script .= "
     /**
      * Filter the query by primary key
      *
-     * @param     mixed \$key Primary key to use for the query
+     * @param mixed \$key Primary key to use for the query
      *
-     * @return \$this|" . $this->getQueryClassName() . " The current query, for fluid interface
+     * @return \$this The current query, for fluid interface
      */
     public function filterByPrimaryKey(\$key)
     {";
@@ -930,7 +930,9 @@ abstract class " . $this->getUnqualifiedClassName() . ' extends ' . $parentClass
             $const = $this->getColumnConstant($col);
             $script .= "
 
-        return \$this->addUsingAlias($const, \$key, Criteria::EQUAL);";
+        \$this->addUsingAlias($const, \$key, Criteria::EQUAL);
+
+        return \$this;";
         } else {
             // composite primary key
             $i = 0;
@@ -956,15 +958,15 @@ abstract class " . $this->getUnqualifiedClassName() . ' extends ' . $parentClass
      *
      * @return void
      */
-    protected function addFilterByPrimaryKeys(&$script)
+    protected function addFilterByPrimaryKeys(string &$script): void
     {
         $script .= "
     /**
      * Filter the query by a list of primary keys
      *
-     * @param     array \$keys The list of primary key to use for the query
+     * @param array|int \$keys The list of primary key to use for the query
      *
-     * @return \$this|" . $this->getQueryClassName() . " The current query, for fluid interface
+     * @return \$this The current query, for fluid interface
      */
     public function filterByPrimaryKeys(\$keys)
     {";
@@ -987,12 +989,16 @@ abstract class " . $this->getUnqualifiedClassName() . ' extends ' . $parentClass
             $const = $this->getColumnConstant($col);
             $script .= "
 
-        return \$this->addUsingAlias($const, \$keys, Criteria::IN);";
+        \$this->addUsingAlias($const, \$keys, Criteria::IN);
+
+        return \$this;";
         } else {
             // composite primary key
             $script .= "
         if (empty(\$keys)) {
-            return \$this->add(null, '1<>1', Criteria::CUSTOM);
+            \$this->add(null, '1<>1', Criteria::CUSTOM);
+
+            return \$this;
         }
         foreach (\$keys as \$key) {";
             $i = 0;
@@ -1026,7 +1032,7 @@ abstract class " . $this->getUnqualifiedClassName() . ' extends ' . $parentClass
      *
      * @return void
      */
-    protected function addFilterByCol(&$script, Column $col)
+    protected function addFilterByCol(string &$script, Column $col): void
     {
         $colPhpName = $col->getPhpName();
         $colName = $col->getName();
@@ -1053,7 +1059,7 @@ abstract class " . $this->getUnqualifiedClassName() . ' extends ' . $parentClass
             }
             $script .= "
      *
-     * @param     mixed \$$variableName The value to use as filter.
+     * @param mixed \$$variableName The value to use as filter.
      *              Use scalar values for equality.
      *              Use array values for in_array() equivalent.
      *              Use associative array('min' => \$minValue, 'max' => \$maxValue) for intervals.";
@@ -1066,7 +1072,7 @@ abstract class " . $this->getUnqualifiedClassName() . ' extends ' . $parentClass
      * \$query->filterBy$colPhpName(array('max' => 'yesterday')); // WHERE $colName > '2011-03-13'
      * </code>
      *
-     * @param     mixed \$$variableName The value to use as filter.
+     * @param mixed \$$variableName The value to use as filter.
      *              Values can be integers (unix timestamps), DateTime objects, or strings.
      *              Empty strings are treated as NULL.
      *              Use scalar values for equality.
@@ -1074,16 +1080,17 @@ abstract class " . $this->getUnqualifiedClassName() . ' extends ' . $parentClass
      *              Use associative array('min' => \$minValue, 'max' => \$maxValue) for intervals.";
         } elseif ($col->getType() == PropelTypes::PHP_ARRAY) {
             $script .= "
-     * @param     array \$$variableName The values to use as filter.";
+     * @param array \$$variableName The values to use as filter.";
         } elseif ($col->isTextType()) {
             $script .= "
      * Example usage:
      * <code>
      * \$query->filterBy$colPhpName('fooValue');   // WHERE $colName = 'fooValue'
      * \$query->filterBy$colPhpName('%fooValue%', Criteria::LIKE); // WHERE $colName LIKE '%fooValue%'
+     * \$query->filterBy$colPhpName(['foo', 'bar']); // WHERE $colName IN ('foo', 'bar')
      * </code>
      *
-     * @param     string \$$variableName The value to use as filter.";
+     * @param string|string[] \$$variableName The value to use as filter.";
         } elseif ($col->isBooleanType()) {
             $script .= "
      * Example usage:
@@ -1092,21 +1099,21 @@ abstract class " . $this->getUnqualifiedClassName() . ' extends ' . $parentClass
      * \$query->filterBy$colPhpName('yes'); // WHERE $colName = true
      * </code>
      *
-     * @param     boolean|string \$$variableName The value to use as filter.
+     * @param bool|string \$$variableName The value to use as filter.
      *              Non-boolean arguments are converted using the following rules:
      *                * 1, '1', 'true',  'on',  and 'yes' are converted to boolean true
      *                * 0, '0', 'false', 'off', and 'no'  are converted to boolean false
      *              Check on string values is case insensitive (so 'FaLsE' is seen as 'false').";
         } else {
             $script .= "
-     * @param     mixed \$$variableName The value to use as filter";
+     * @param mixed \$$variableName The value to use as filter";
         }
         $script .= "
-     * @param     string \$comparison Operator to use for the column comparison, defaults to Criteria::EQUAL
+     * @param string|null \$comparison Operator to use for the column comparison, defaults to Criteria::EQUAL
      *
-     * @return \$this|" . $this->getQueryClassName() . " The current query, for fluid interface
+     * @return \$this The current query, for fluid interface
      */
-    public function filterBy$colPhpName(\$$variableName = null, \$comparison = null)
+    public function filterBy$colPhpName(\$$variableName = null, ?string \$comparison = null)
     {";
         if ($col->isNumericType() || $col->isTemporalType()) {
             $script .= "
@@ -1173,7 +1180,7 @@ abstract class " . $this->getUnqualifiedClassName() . ' extends ' . $parentClass
         } elseif ($col->isSetType()) {
             $this->declareClasses(
                 'Propel\Common\Util\SetColumnConverter',
-                'Propel\Common\Exception\SetColumnConverterException'
+                'Propel\Common\Exception\SetColumnConverterException',
             );
             $script .= "
         \$valueSet = " . $this->getTableMapClassName() . '::getValueSet(' . $this->getColumnConstant($col) . ");
@@ -1210,7 +1217,7 @@ abstract class " . $this->getUnqualifiedClassName() . ' extends ' . $parentClass
             }
             \$$variableName = array_search(\$$variableName, \$valueSet);
         } elseif (is_array(\$$variableName)) {
-            \$convertedValues = array();
+            \$convertedValues = [];
             foreach (\$$variableName as \$value) {
                 if (!in_array(\$value, \$valueSet)) {
                     throw new PropelException(sprintf('Value \"%s\" is not accepted in this enumerated column', \$value));
@@ -1237,7 +1244,9 @@ abstract class " . $this->getUnqualifiedClassName() . ' extends ' . $parentClass
         }
         $script .= "
 
-        return \$this->addUsingAlias($qualifiedName, \$$variableName, \$comparison);
+        \$this->addUsingAlias($qualifiedName, \$$variableName, \$comparison);
+
+        return \$this;
     }
 ";
     }
@@ -1250,7 +1259,7 @@ abstract class " . $this->getUnqualifiedClassName() . ' extends ' . $parentClass
      *
      * @return void
      */
-    protected function addFilterByArrayCol(&$script, Column $col)
+    protected function addFilterByArrayCol(string &$script, Column $col): void
     {
         $singularPhpName = $col->getPhpSingularName();
         $colName = $col->getName();
@@ -1259,12 +1268,12 @@ abstract class " . $this->getUnqualifiedClassName() . ' extends ' . $parentClass
         $script .= "
     /**
      * Filter the query on the $colName column
-     * @param     mixed \$$variableName The value to use as filter
-     * @param     string \$comparison Operator to use for the column comparison, defaults to Criteria::CONTAINS_ALL
+     * @param mixed \$$variableName The value to use as filter
+     * @param string|null \$comparison Operator to use for the column comparison, defaults to Criteria::CONTAINS_ALL
      *
-     * @return \$this|" . $this->getQueryClassName() . " The current query, for fluid interface
+     * @return \$this The current query, for fluid interface
      */
-    public function filterBy$singularPhpName(\$$variableName = null, \$comparison = null)
+    public function filterBy$singularPhpName(\$$variableName = null, ?string \$comparison = null)
     {
         if (null === \$comparison || \$comparison == Criteria::CONTAINS_ALL) {
             if (is_scalar(\$$variableName)) {
@@ -1285,7 +1294,9 @@ abstract class " . $this->getUnqualifiedClassName() . ' extends ' . $parentClass
             return \$this;
         }
 
-        return \$this->addUsingAlias($qualifiedName, \$$variableName, \$comparison);
+        \$this->addUsingAlias($qualifiedName, \$$variableName, \$comparison);
+
+        return \$this;
     }
 ";
     }
@@ -1298,7 +1309,7 @@ abstract class " . $this->getUnqualifiedClassName() . ' extends ' . $parentClass
      *
      * @return void
      */
-    protected function addFilterBySetCol(&$script, Column $col)
+    protected function addFilterBySetCol(string &$script, Column $col): void
     {
         $colPhpName = $col->getPhpName();
         $singularPhpName = $col->getPhpSingularName();
@@ -1307,14 +1318,16 @@ abstract class " . $this->getUnqualifiedClassName() . ' extends ' . $parentClass
         $script .= "
     /**
      * Filter the query on the $colName column
-     * @param     mixed \$$variableName The value to use as filter
-     * @param     string \$comparison Operator to use for the column comparison, defaults to Criteria::CONTAINS_ALL
+     * @param mixed \$$variableName The value to use as filter
+     * @param string \$comparison Operator to use for the column comparison, defaults to Criteria::CONTAINS_ALL
      *
-     * @return \$this|" . $this->getQueryClassName() . " The current query, for fluid interface
+     * @return \$this The current query, for fluid interface
      */
-    public function filterBy$singularPhpName(\$$variableName = null, \$comparison = null)
+    public function filterBy$singularPhpName(\$$variableName = null, ?string \$comparison = null)
     {
-        return \$this->filterBy$colPhpName(\$$variableName, \$comparison);
+        \$this->filterBy$colPhpName(\$$variableName, \$comparison);
+
+        return \$this;
     }
 ";
     }
@@ -1327,11 +1340,11 @@ abstract class " . $this->getUnqualifiedClassName() . ' extends ' . $parentClass
      *
      * @return void
      */
-    protected function addFilterByFk(&$script, $fk)
+    protected function addFilterByFk(string &$script, ForeignKey $fk): void
     {
         $this->declareClasses(
             '\Propel\Runtime\Collection\ObjectCollection',
-            '\Propel\Runtime\Exception\PropelException'
+            '\Propel\Runtime\Exception\PropelException',
         );
         $queryClass = $this->getQueryClassName();
         $fkTable = $fk->getForeignTable();
@@ -1352,13 +1365,13 @@ abstract class " . $this->getUnqualifiedClassName() . ' extends ' . $parentClass
      * @param $fkPhpName|ObjectCollection $objectName The related object(s) to use as filter";
         }
         $script .= "
-     * @param string \$comparison Operator to use for the column comparison, defaults to Criteria::EQUAL
+     * @param string|null \$comparison Operator to use for the column comparison, defaults to Criteria::EQUAL
      *
      * @throws \\Propel\\Runtime\\Exception\\PropelException
      *
-     * @return $queryClass The current query, for fluid interface
+     * @return \$this The current query, for fluid interface
      */
-    public function filterBy$relationName($objectName, \$comparison = null)
+    public function filterBy$relationName($objectName, ?string \$comparison = null)
     {
         if ($objectName instanceof $fkPhpName) {
             return \$this";
@@ -1386,8 +1399,10 @@ abstract class " . $this->getUnqualifiedClassName() . ' extends ' . $parentClass
                 \$comparison = Criteria::IN;
             }
 
-            return \$this
-                ->addUsingAlias($localColumnConstant, {$objectName}->toKeyValue('$keyColumn', '$foreignColumnName'), \$comparison);";
+            \$this
+                ->addUsingAlias($localColumnConstant, {$objectName}->toKeyValue('$keyColumn', '$foreignColumnName'), \$comparison);
+
+            return \$this;";
         }
         $script .= "
         } else {";
@@ -1412,11 +1427,11 @@ abstract class " . $this->getUnqualifiedClassName() . ' extends ' . $parentClass
      *
      * @return void
      */
-    protected function addFilterByRefFk(&$script, ForeignKey $fk)
+    protected function addFilterByRefFk(string &$script, ForeignKey $fk): void
     {
         $this->declareClasses(
             '\Propel\Runtime\Collection\ObjectCollection',
-            '\Propel\Runtime\Exception\PropelException'
+            '\Propel\Runtime\Exception\PropelException',
         );
         $queryClass = $this->getQueryClassName();
         $fkTable = $this->getTable()->getDatabase()->getTable($fk->getTableName());
@@ -1430,14 +1445,14 @@ abstract class " . $this->getUnqualifiedClassName() . ' extends ' . $parentClass
      * Filter the query by a related $fkPhpName object
      *
      * @param $fkPhpName|ObjectCollection $objectName the related object to use as filter
-     * @param string \$comparison Operator to use for the column comparison, defaults to Criteria::EQUAL
+     * @param string|null \$comparison Operator to use for the column comparison, defaults to Criteria::EQUAL
      *
-     * @return $queryClass The current query, for fluid interface
+     * @return \$this The current query, for fluid interface
      */
-    public function filterBy$relationName($objectName, \$comparison = null)
+    public function filterBy$relationName($objectName, ?string \$comparison = null)
     {
         if ($objectName instanceof $fkPhpName) {
-            return \$this";
+            \$this";
         foreach ($fk->getInverseMapping() as $mapping) {
             /** @var \Propel\Generator\Model\Column $foreignColumn */
             [$localValueOrColumn, $foreignColumn] = $mapping;
@@ -1453,14 +1468,18 @@ abstract class " . $this->getUnqualifiedClassName() . ' extends ' . $parentClass
                 ->where(\"$leftValue = ?\", $rightValue, $bindingType)";
             }
         }
-        $script .= ';';
+        $script .= ';
+
+            return $this;';
         if (!$fk->isComposite()) {
             $script .= "
         } elseif ($objectName instanceof ObjectCollection) {
-            return \$this
+            \$this
                 ->use{$relationName}Query()
                 ->filterByPrimaryKeys({$objectName}->getPrimaryKeys())
-                ->endUse();";
+                ->endUse();
+
+            return \$this;";
         }
         $script .= "
         } else {";
@@ -1485,7 +1504,7 @@ abstract class " . $this->getUnqualifiedClassName() . ' extends ' . $parentClass
      *
      * @return void
      */
-    protected function addJoinFk(&$script, $fk)
+    protected function addJoinFk(string &$script, ForeignKey $fk): void
     {
         $queryClass = $this->getQueryClassName();
         $fkTable = $fk->getForeignTable();
@@ -1502,7 +1521,7 @@ abstract class " . $this->getUnqualifiedClassName() . ' extends ' . $parentClass
      *
      * @return void
      */
-    protected function addJoinRefFk(&$script, ForeignKey $fk)
+    protected function addJoinRefFk(string &$script, ForeignKey $fk): void
     {
         $queryClass = $this->getQueryClassName();
         $fkTable = $this->getTable()->getDatabase()->getTable($fk->getTableName());
@@ -1515,25 +1534,30 @@ abstract class " . $this->getUnqualifiedClassName() . ' extends ' . $parentClass
      * Adds a joinRelated method for this object.
      *
      * @param string $script The script will be modified in this method.
-     * @param \Propel\Generator\Model\Table|null $fkTable
+     * @param \Propel\Generator\Model\Table $fkTable
      * @param string $queryClass
      * @param string $relationName
      * @param string $joinType
      *
      * @return void
      */
-    protected function addJoinRelated(&$script, $fkTable, $queryClass, $relationName, $joinType)
-    {
+    protected function addJoinRelated(
+        string &$script,
+        Table $fkTable,
+        string $queryClass,
+        string $relationName,
+        string $joinType
+    ): void {
         $script .= "
     /**
      * Adds a JOIN clause to the query using the " . $relationName . " relation
      *
-     * @param     string \$relationAlias optional alias for the relation
-     * @param     string \$joinType Accepted values are null, 'left join', 'right join', 'inner join'
+     * @param string|null \$relationAlias Optional alias for the relation
+     * @param string|null \$joinType Accepted values are null, 'left join', 'right join', 'inner join'
      *
-     * @return \$this|" . $queryClass . " The current query, for fluid interface
+     * @return \$this The current query, for fluid interface
      */
-    public function join" . $relationName . '($relationAlias = null, $joinType = ' . $joinType . ")
+    public function join" . $relationName . '(?string $relationAlias = null, ?string $joinType = ' . $joinType . ")
     {
         \$tableMap = \$this->getTableMap();
         \$relationMap = \$tableMap->getRelation('" . $relationName . "');
@@ -1567,7 +1591,7 @@ abstract class " . $this->getUnqualifiedClassName() . ' extends ' . $parentClass
      *
      * @return void
      */
-    protected function addUseFkQuery(&$script, $fk)
+    protected function addUseFkQuery(string &$script, ForeignKey $fk): void
     {
         $fkTable = $fk->getForeignTable();
         $fkQueryBuilder = $this->getNewStubQueryBuilder($fkTable);
@@ -1588,7 +1612,7 @@ abstract class " . $this->getUnqualifiedClassName() . ' extends ' . $parentClass
      *
      * @return void
      */
-    protected function addUseRefFkQuery(&$script, ForeignKey $fk)
+    protected function addUseRefFkQuery(string &$script, ForeignKey $fk): void
     {
         $fkTable = $this->getTable()->getDatabase()->getTable($fk->getTableName());
         $fkQueryBuilder = $this->getNewStubQueryBuilder($fkTable);
@@ -1612,7 +1636,7 @@ abstract class " . $this->getUnqualifiedClassName() . ' extends ' . $parentClass
      *
      * @return void
      */
-    protected function addUseRelatedQuery(&$script, Table $fkTable, $queryClass, $relationName, $joinType)
+    protected function addUseRelatedQuery(string &$script, Table $fkTable, string $queryClass, string $relationName, string $joinType): void
     {
         $script .= "
     /**
@@ -1620,9 +1644,9 @@ abstract class " . $this->getUnqualifiedClassName() . ' extends ' . $parentClass
      *
      * @see useQuery()
      *
-     * @param     string \$relationAlias optional alias for the relation,
+     * @param string \$relationAlias optional alias for the relation,
      *                                   to be used as main alias in the secondary query
-     * @param     string \$joinType Accepted values are null, 'left join', 'right join', 'inner join'
+     * @param string \$joinType Accepted values are null, 'left join', 'right join', 'inner join'
      *
      * @return $queryClass A secondary query class using the current class as primary query
      */
@@ -1645,7 +1669,7 @@ abstract class " . $this->getUnqualifiedClassName() . ' extends ' . $parentClass
      *
      * @return void
      */
-    protected function addUseRelatedExistsQuery(&$script, Table $fkTable, $queryClass, $relationName)
+    protected function addUseRelatedExistsQuery(string &$script, Table $fkTable, string $queryClass, string $relationName): void
     {
         $relationDescription = ($relationName === $fkTable->getPhpName()) ?
             "relation to $relationName table" :
@@ -1699,7 +1723,7 @@ EOT;
      *
      * @return void
      */
-    protected function addWithRelatedQuery(&$script, Table $fkTable, $queryClass, $relationName, $joinType)
+    protected function addWithRelatedQuery(string &$script, Table $fkTable, string $queryClass, string $relationName, string $joinType): void
     {
         $script .= "
     /**
@@ -1736,7 +1760,7 @@ EOT;
      *
      * @return void
      */
-    protected function addFilterByCrossFK(&$script, CrossForeignKeys $crossFKs)
+    protected function addFilterByCrossFK(string &$script, CrossForeignKeys $crossFKs): void
     {
         $relationName = $this->getRefFKPhpNameAffix($crossFKs->getIncomingForeignKey(), false);
 
@@ -1756,14 +1780,16 @@ EOT;
      * @param $fkPhpName $objectName the related object to use as filter
      * @param string \$comparison Operator to use for the column comparison, defaults to Criteria::EQUAL
      *
-     * @return $queryClass The current query, for fluid interface
+     * @return \$this The current query, for fluid interface
      */
-    public function filterBy{$relName}($objectName, \$comparison = Criteria::EQUAL)
+    public function filterBy{$relName}($objectName, string \$comparison = Criteria::EQUAL)
     {
-        return \$this
+        \$this
             ->use{$relationName}Query()
             ->filterBy{$relName}($objectName, \$comparison)
             ->endUse();
+
+        return \$this;
     }
 ";
         }
@@ -1776,7 +1802,7 @@ EOT;
      *
      * @return void
      */
-    protected function addPrune(&$script)
+    protected function addPrune(string &$script): void
     {
         $table = $this->getTable();
         $class = $this->getObjectClassName();
@@ -1786,9 +1812,9 @@ EOT;
     /**
      * Exclude object from result
      *
-     * @param   $class $objectName Object to remove from the list of results
+     * @param $class $objectName Object to remove from the list of results
      *
-     * @return \$this|" . $this->getQueryClassName() . " The current query, for fluid interface
+     * @return \$this The current query, for fluid interface
      */
     public function prune($objectName = null)
     {
@@ -1834,7 +1860,7 @@ EOT;
      *
      * @return void
      */
-    protected function addBasePreSelect(&$script)
+    protected function addBasePreSelect(string &$script): void
     {
         $behaviorCode = '';
         $this->applyBehaviorModifier('preSelectQuery', $behaviorCode, '        ');
@@ -1845,12 +1871,12 @@ EOT;
     /**
      * Code to execute before every SELECT statement
      *
-     * @param     ConnectionInterface \$con The connection object used by the query
+     * @param ConnectionInterface \$con The connection object used by the query
      */
-    protected function basePreSelect(ConnectionInterface \$con)
+    protected function basePreSelect(ConnectionInterface \$con): void
     {" . $behaviorCode . "
 
-        return \$this->preSelect(\$con);
+        \$this->preSelect(\$con);
     }
 ";
     }
@@ -1862,7 +1888,7 @@ EOT;
      *
      * @return void
      */
-    protected function addBasePreDelete(&$script)
+    protected function addBasePreDelete(string &$script): void
     {
         $behaviorCode = '';
         $this->applyBehaviorModifier('preDeleteQuery', $behaviorCode, '        ');
@@ -1873,9 +1899,10 @@ EOT;
     /**
      * Code to execute before every DELETE statement
      *
-     * @param     ConnectionInterface \$con The connection object used by the query
+     * @param ConnectionInterface \$con The connection object used by the query
+     * @return int|null
      */
-    protected function basePreDelete(ConnectionInterface \$con)
+    protected function basePreDelete(ConnectionInterface \$con): ?int
     {" . $behaviorCode . "
 
         return \$this->preDelete(\$con);
@@ -1890,7 +1917,7 @@ EOT;
      *
      * @return void
      */
-    protected function addBasePostDelete(&$script)
+    protected function addBasePostDelete(string &$script): void
     {
         $behaviorCode = '';
         $this->applyBehaviorModifier('postDeleteQuery', $behaviorCode, '        ');
@@ -1901,10 +1928,11 @@ EOT;
     /**
      * Code to execute after every DELETE statement
      *
-     * @param     int \$affectedRows the number of deleted rows
-     * @param     ConnectionInterface \$con The connection object used by the query
+     * @param int \$affectedRows the number of deleted rows
+     * @param ConnectionInterface \$con The connection object used by the query
+     * @return int|null
      */
-    protected function basePostDelete(\$affectedRows, ConnectionInterface \$con)
+    protected function basePostDelete(int \$affectedRows, ConnectionInterface \$con): ?int
     {" . $behaviorCode . "
 
         return \$this->postDelete(\$affectedRows, \$con);
@@ -1919,7 +1947,7 @@ EOT;
      *
      * @return void
      */
-    protected function addBasePreUpdate(&$script)
+    protected function addBasePreUpdate(string &$script): void
     {
         $behaviorCode = '';
         $this->applyBehaviorModifier('preUpdateQuery', $behaviorCode, '        ');
@@ -1930,11 +1958,13 @@ EOT;
     /**
      * Code to execute before every UPDATE statement
      *
-     * @param     array \$values The associative array of columns and values for the update
-     * @param     ConnectionInterface \$con The connection object used by the query
-     * @param     boolean \$forceIndividualSaves If false (default), the resulting call is a Criteria::doUpdate(), otherwise it is a series of save() calls on all the found objects
+     * @param array \$values The associative array of columns and values for the update
+     * @param ConnectionInterface \$con The connection object used by the query
+     * @param bool \$forceIndividualSaves If false (default), the resulting call is a Criteria::doUpdate(), otherwise it is a series of save() calls on all the found objects
+     *
+     * @return int|null
      */
-    protected function basePreUpdate(&\$values, ConnectionInterface \$con, \$forceIndividualSaves = false)
+    protected function basePreUpdate(&\$values, ConnectionInterface \$con, \$forceIndividualSaves = false): ?int
     {" . $behaviorCode . "
 
         return \$this->preUpdate(\$values, \$con, \$forceIndividualSaves);
@@ -1949,7 +1979,7 @@ EOT;
      *
      * @return void
      */
-    protected function addBasePostUpdate(&$script)
+    protected function addBasePostUpdate(string &$script): void
     {
         $behaviorCode = '';
         $this->applyBehaviorModifier('postUpdateQuery', $behaviorCode, '        ');
@@ -1960,10 +1990,12 @@ EOT;
     /**
      * Code to execute after every UPDATE statement
      *
-     * @param     int \$affectedRows the number of updated rows
-     * @param     ConnectionInterface \$con The connection object used by the query
+     * @param int \$affectedRows the number of updated rows
+     * @param ConnectionInterface \$con The connection object used by the query
+     *
+     * @return int|null
      */
-    protected function basePostUpdate(\$affectedRows, ConnectionInterface \$con)
+    protected function basePostUpdate(\$affectedRows, ConnectionInterface \$con): ?int
     {" . $behaviorCode . "
 
         return \$this->postUpdate(\$affectedRows, \$con);
@@ -1979,7 +2011,7 @@ EOT;
      *
      * @return bool
      */
-    public function hasBehaviorModifier($hookName, $modifier = '')
+    public function hasBehaviorModifier(string $hookName, string $modifier = ''): bool
     {
         return parent::hasBehaviorModifier($hookName, 'QueryBuilderModifier');
     }
@@ -1993,7 +2025,7 @@ EOT;
      *
      * @return string
      */
-    public function applyBehaviorModifier($hookName, &$script, $tab = '        ')
+    public function applyBehaviorModifier(string $hookName, string &$script, string $tab = '        '): string
     {
         $this->applyBehaviorModifierBase($hookName, 'QueryBuilderModifier', $script, $tab);
 
@@ -2007,7 +2039,7 @@ EOT;
      *
      * @return string|null
      */
-    public function getBehaviorContent($contentName)
+    public function getBehaviorContent(string $contentName): ?string
     {
         return $this->getBehaviorContentBase($contentName, 'QueryBuilderModifier');
     }
@@ -2019,19 +2051,19 @@ EOT;
      *
      * @return void
      */
-    protected function addDelete(&$script)
+    protected function addDelete(string &$script): void
     {
         $script .= "
     /**
      * Performs a DELETE on the database based on the current ModelCriteria
      *
      * @param ConnectionInterface \$con the connection to use
-     * @return int             The number of affected rows (if supported by underlying database driver).  This includes CASCADE-related rows
+     * @return int The number of affected rows (if supported by underlying database driver).  This includes CASCADE-related rows
      *                         if supported by native driver or if emulated using Propel.
-     * @throws PropelException Any exceptions caught during processing will be
+     * @throws \Propel\Runtime\Exception\PropelException Any exceptions caught during processing will be
      *                         rethrown wrapped into a PropelException.
      */
-    public function delete(ConnectionInterface \$con = null)
+    public function delete(?ConnectionInterface \$con = null): int
     {
         if (null === \$con) {
             \$con = Propel::getServiceContainer()->getWriteConnection(" . $this->getTableMapClass() . "::DATABASE_NAME);
@@ -2085,7 +2117,7 @@ EOT;
      *
      * @return void
      */
-    protected function addDoOnDeleteCascade(&$script)
+    protected function addDoOnDeleteCascade(string &$script): void
     {
         $table = $this->getTable();
         $script .= "
@@ -2101,7 +2133,7 @@ EOT;
      * @param ConnectionInterface \$con
      * @return int The number of affected rows (if supported by underlying database driver).
      */
-    protected function doOnDeleteCascade(ConnectionInterface \$con)
+    protected function doOnDeleteCascade(ConnectionInterface \$con): int
     {
         // initialize var to track total num of affected rows
         \$affectedRows = 0;
@@ -2167,7 +2199,7 @@ EOT;
      *
      * @return void
      */
-    protected function addDoOnDeleteSetNull(&$script)
+    protected function addDoOnDeleteSetNull(string &$script): void
     {
         $table = $this->getTable();
         $script .= "
@@ -2183,7 +2215,7 @@ EOT;
      * @param ConnectionInterface \$con
      * @return void
      */
-    protected function doOnDeleteSetNull(ConnectionInterface \$con)
+    protected function doOnDeleteSetNull(ConnectionInterface \$con): void
     {
         // first find the objects that are implicated by the \$this
         \$objects = {$this->getQueryClassName()}::create(null, \$this)->find(\$con);
@@ -2245,7 +2277,7 @@ EOT;
      *
      * @return void
      */
-    protected function addDoDeleteAll(&$script)
+    protected function addDoDeleteAll(string &$script): void
     {
         $table = $this->getTable();
         $script .= "
@@ -2255,7 +2287,7 @@ EOT;
      * @param ConnectionInterface \$con the connection to use
      * @return int The number of affected rows (if supported by underlying database driver).
      */
-    public function doDeleteAll(ConnectionInterface \$con = null)
+    public function doDeleteAll(?ConnectionInterface \$con = null): int
     {
         if (null === \$con) {
             \$con = Propel::getServiceContainer()->getWriteConnection(" . $this->getTableMapClass() . "::DATABASE_NAME);

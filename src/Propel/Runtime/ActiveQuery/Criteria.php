@@ -24,7 +24,9 @@ use Propel\Runtime\ActiveQuery\QueryExecutor\SelectQueryExecutor;
 use Propel\Runtime\ActiveQuery\QueryExecutor\UpdateQueryExecutor;
 use Propel\Runtime\ActiveQuery\SqlBuilder\SelectQuerySqlBuilder;
 use Propel\Runtime\Connection\ConnectionInterface;
+use Propel\Runtime\DataFetcher\DataFetcherInterface;
 use Propel\Runtime\Exception\LogicException;
+use Propel\Runtime\Map\ColumnMap;
 use Propel\Runtime\Propel;
 use Propel\Runtime\Util\PropelConditionalProxy;
 
@@ -42,80 +44,194 @@ use Propel\Runtime\Util\PropelConditionalProxy;
  */
 class Criteria
 {
+    /**
+     * @var string
+     */
     public const EQUAL = '=';
 
+    /**
+     * @var string
+     */
     public const NOT_EQUAL = '<>';
 
+    /**
+     * @var string
+     */
     public const ALT_NOT_EQUAL = '!=';
 
+    /**
+     * @var string
+     */
     public const GREATER_THAN = '>';
 
+    /**
+     * @var string
+     */
     public const LESS_THAN = '<';
 
+    /**
+     * @var string
+     */
     public const GREATER_EQUAL = '>=';
 
+    /**
+     * @var string
+     */
     public const LESS_EQUAL = '<=';
 
+    /**
+     * @var string
+     */
     public const LIKE = ' LIKE ';
 
+    /**
+     * @var string
+     */
     public const NOT_LIKE = ' NOT LIKE ';
 
+    /**
+     * @var string
+     */
     public const CONTAINS_ALL = 'CONTAINS_ALL';
 
+    /**
+     * @var string
+     */
     public const CONTAINS_SOME = 'CONTAINS_SOME';
 
+    /**
+     * @var string
+     */
     public const CONTAINS_NONE = 'CONTAINS_NONE';
 
+    /**
+     * @var string
+     */
     public const ILIKE = ' ILIKE ';
 
+    /**
+     * @var string
+     */
     public const NOT_ILIKE = ' NOT ILIKE ';
 
+    /**
+     * @var string
+     */
     public const CUSTOM = 'CUSTOM';
 
+    /**
+     * @var string
+     */
     public const RAW = 'RAW';
 
+    /**
+     * @var string
+     */
     public const CUSTOM_EQUAL = 'CUSTOM_EQUAL';
 
+    /**
+     * @var string
+     */
     public const DISTINCT = 'DISTINCT';
 
+    /**
+     * @var string
+     */
     public const IN = ' IN ';
 
+    /**
+     * @var string
+     */
     public const NOT_IN = ' NOT IN ';
 
+    /**
+     * @var string
+     */
     public const ALL = 'ALL';
 
+    /**
+     * @var string
+     */
     public const JOIN = 'JOIN';
 
+    /**
+     * @var string
+     */
     public const BINARY_AND = '&';
 
+    /**
+     * @var string
+     */
     public const BINARY_OR = '|';
 
+    /**
+     * @var string
+     */
     public const BINARY_ALL = 'BINARY_ALL';
 
+    /**
+     * @var string
+     */
     public const BINARY_NONE = 'BINARY_NONE';
 
+    /**
+     * @var string
+     */
     public const ASC = 'ASC';
 
+    /**
+     * @var string
+     */
     public const DESC = 'DESC';
 
+    /**
+     * @var string
+     */
     public const ISNULL = ' IS NULL ';
 
+    /**
+     * @var string
+     */
     public const ISNOTNULL = ' IS NOT NULL ';
 
+    /**
+     * @var string
+     */
     public const CURRENT_DATE = 'CURRENT_DATE';
 
+    /**
+     * @var string
+     */
     public const CURRENT_TIME = 'CURRENT_TIME';
 
+    /**
+     * @var string
+     */
     public const CURRENT_TIMESTAMP = 'CURRENT_TIMESTAMP';
 
+    /**
+     * @var string
+     */
     public const LEFT_JOIN = 'LEFT JOIN';
 
+    /**
+     * @var string
+     */
     public const RIGHT_JOIN = 'RIGHT JOIN';
 
+    /**
+     * @var string
+     */
     public const INNER_JOIN = 'INNER JOIN';
 
+    /**
+     * @var string
+     */
     public const LOGICAL_OR = 'OR';
 
+    /**
+     * @var string
+     */
     public const LOGICAL_AND = 'AND';
 
     /**
@@ -131,21 +247,21 @@ class Criteria
     /**
      * Storage of select data. Collection of column names.
      *
-     * @var array
+     * @var array<string>
      */
     protected $selectColumns = [];
 
     /**
      * Storage of aliased select data. Collection of column names.
      *
-     * @var string[]
+     * @var array<string>
      */
     protected $asColumns = [];
 
     /**
      * Storage of select modifiers data. Collection of modifier names.
      *
-     * @var string[]
+     * @var array<string>
      */
     protected $selectModifiers = [];
 
@@ -159,21 +275,21 @@ class Criteria
     /**
      * Storage of conditions data. Collection of Criterion objects.
      *
-     * @var \Propel\Runtime\ActiveQuery\Criterion\AbstractCriterion[]
+     * @var array<\Propel\Runtime\ActiveQuery\Criterion\AbstractCriterion>
      */
     protected $map = [];
 
     /**
      * Storage of ordering data. Collection of column names.
      *
-     * @var array
+     * @var array<string>
      */
     protected $orderByColumns = [];
 
     /**
      * Storage of grouping data. Collection of column names.
      *
-     * @var array
+     * @var array<string>
      */
     protected $groupByColumns = [];
 
@@ -187,12 +303,12 @@ class Criteria
     /**
      * Storage of join data. collection of Join objects.
      *
-     * @var \Propel\Runtime\ActiveQuery\Join[]
+     * @var array<\Propel\Runtime\ActiveQuery\Join>
      */
     protected $joins = [];
 
     /**
-     * @var \Propel\Runtime\ActiveQuery\Criteria[]
+     * @var array<\Propel\Runtime\ActiveQuery\Criteria>
      */
     protected $selectQueries = [];
 
@@ -242,7 +358,7 @@ class Criteria
     protected $queryComment;
 
     /**
-     * @var string[]
+     * @var array<string>
      */
     protected $aliases = [];
 
@@ -254,7 +370,7 @@ class Criteria
     /**
      * Storage for Criterions expected to be combined
      *
-     * @var \Propel\Runtime\ActiveQuery\Criterion\AbstractCriterion[]
+     * @var array<string, \Propel\Runtime\ActiveQuery\Criterion\AbstractCriterion>
      */
     protected $namedCriterions = [];
 
@@ -264,7 +380,7 @@ class Criteria
      * @see addUsingOperator()
      * @var string Criteria::LOGICAL_AND or Criteria::LOGICAL_OR
      */
-    protected $defaultCombineOperator = Criteria::LOGICAL_AND;
+    protected $defaultCombineOperator = self::LOGICAL_AND;
 
     /**
      * @var \Propel\Runtime\Util\PropelConditionalProxy|null
@@ -301,7 +417,7 @@ class Criteria
      *
      * @param string|null $dbName The database name.
      */
-    public function __construct($dbName = null)
+    public function __construct(?string $dbName = null)
     {
         $this->setDbName($dbName);
         $this->originalDbName = $dbName;
@@ -310,9 +426,9 @@ class Criteria
     /**
      * Get the criteria map, i.e. the array of Criterions
      *
-     * @return \Propel\Runtime\ActiveQuery\Criterion\AbstractCriterion[]
+     * @return array<\Propel\Runtime\ActiveQuery\Criterion\AbstractCriterion>
      */
-    public function getMap()
+    public function getMap(): array
     {
         return $this->map;
     }
@@ -322,7 +438,7 @@ class Criteria
      * can be reused as if it was new. Except if the criteria has grown in
      * capacity, it is left at the current capacity.
      *
-     * @return void
+     * @return $this
      */
     public function clear()
     {
@@ -344,6 +460,8 @@ class Criteria
         $this->limit = -1;
         $this->aliases = [];
         $this->useTransaction = false;
+
+        return $this;
     }
 
     /**
@@ -361,7 +479,7 @@ class Criteria
      *
      * @return $this A modified Criteria object.
      */
-    public function addAsColumn($name, $clause)
+    public function addAsColumn(string $name, string $clause)
     {
         $this->asColumns[$name] = $clause;
 
@@ -374,7 +492,7 @@ class Criteria
      * @return array An assoc array which map the column alias names
      *               to the alias clauses.
      */
-    public function getAsColumns()
+    public function getAsColumns(): array
     {
         return $this->asColumns;
     }
@@ -386,7 +504,7 @@ class Criteria
      *
      * @return string|null
      */
-    public function getColumnForAs($as)
+    public function getColumnForAs(string $as): ?string
     {
         if (isset($this->asColumns[$as])) {
             return $this->asColumns[$as];
@@ -404,7 +522,7 @@ class Criteria
      *
      * @return $this A modified Criteria object.
      */
-    public function addAlias($alias, $table)
+    public function addAlias(string $alias, string $table)
     {
         $this->aliases[$alias] = $table;
 
@@ -418,7 +536,7 @@ class Criteria
      *
      * @return $this A modified Criteria object.
      */
-    public function removeAlias($alias)
+    public function removeAlias(string $alias)
     {
         unset($this->aliases[$alias]);
 
@@ -430,7 +548,7 @@ class Criteria
      *
      * @return array
      */
-    public function getAliases()
+    public function getAliases(): array
     {
         return $this->aliases;
     }
@@ -442,7 +560,7 @@ class Criteria
      *
      * @return string|null
      */
-    public function getTableForAlias($alias)
+    public function getTableForAlias(string $alias): ?string
     {
         if (isset($this->aliases[$alias])) {
             return $this->aliases[$alias];
@@ -462,7 +580,7 @@ class Criteria
      *
      * @return array
      */
-    public function getTableNameAndAlias($tableAliasOrName)
+    public function getTableNameAndAlias(string $tableAliasOrName): array
     {
         if (isset($this->aliases[$tableAliasOrName])) {
             return [$this->aliases[$tableAliasOrName], $tableAliasOrName];
@@ -480,7 +598,7 @@ class Criteria
      *
      * @return array
      */
-    public function keys()
+    public function keys(): array
     {
         return array_keys($this->map);
     }
@@ -492,7 +610,7 @@ class Criteria
      *
      * @return bool True if this Criteria object contain the specified key.
      */
-    public function containsKey($column)
+    public function containsKey(string $column): bool
     {
         // must use array_key_exists() because the key could
         // exist but have a NULL value (that'd be valid).
@@ -506,7 +624,7 @@ class Criteria
      *
      * @return bool True if this Criteria object contain the specified key and a value for that key
      */
-    public function keyContainsValue($column)
+    public function keyContainsValue(string $column): bool
     {
         // must use array_key_exists() because the key could
         // exist but have a NULL value (that'd be valid).
@@ -522,9 +640,9 @@ class Criteria
      *
      * @return bool
      */
-    public function hasWhereClause()
+    public function hasWhereClause(): bool
     {
-        return !empty($this->map);
+        return (bool)$this->map;
     }
 
     /**
@@ -535,11 +653,13 @@ class Criteria
      *
      * @param bool $v
      *
-     * @return void
+     * @return $this
      */
-    public function setUseTransaction($v)
+    public function setUseTransaction(bool $v)
     {
         $this->useTransaction = (bool)$v;
+
+        return $this;
     }
 
     /**
@@ -548,7 +668,7 @@ class Criteria
      *
      * @return bool
      */
-    public function isUseTransaction()
+    public function isUseTransaction(): bool
     {
         return $this->useTransaction;
     }
@@ -563,7 +683,7 @@ class Criteria
      *
      * @return \Propel\Runtime\ActiveQuery\Criterion\AbstractCriterion A Criterion object.
      */
-    public function getCriterion($column)
+    public function getCriterion(string $column): AbstractCriterion
     {
         return $this->map[$column];
     }
@@ -573,7 +693,7 @@ class Criteria
      *
      * @return \Propel\Runtime\ActiveQuery\Criterion\AbstractCriterion|null A Criterion or null no Criterion is added.
      */
-    public function getLastCriterion()
+    public function getLastCriterion(): ?AbstractCriterion
     {
         $count = count($this->map);
         if ($count) {
@@ -596,7 +716,7 @@ class Criteria
      *
      * @return \Propel\Runtime\ActiveQuery\Criterion\AbstractCriterion
      */
-    public function getNewCriterion($column, $value = null, $comparison = self::EQUAL)
+    public function getNewCriterion(string $column, $value = null, $comparison = self::EQUAL): AbstractCriterion
     {
         if (is_int($comparison)) {
             // $comparison is a PDO::PARAM_* constant value
@@ -604,24 +724,24 @@ class Criteria
             return new RawCriterion($this, $column, $value, $comparison);
         }
         switch ($comparison) {
-            case Criteria::CUSTOM:
+            case self::CUSTOM:
                 // custom expression with no parameter binding
                 // something like $c->add(BookTableMap::TITLE, "CONCAT(book.TITLE, 'bar') = 'foobar'", Criteria::CUSTOM);
                 return new CustomCriterion($this, $value);
-            case Criteria::IN:
-            case Criteria::NOT_IN:
+            case self::IN:
+            case self::NOT_IN:
                 // table.column IN (?, ?) or table.column NOT IN (?, ?)
                 // something like $c->add(BookTableMap::TITLE, array('foo', 'bar'), Criteria::IN);
                 return new InCriterion($this, $column, $value, $comparison);
-            case Criteria::LIKE:
-            case Criteria::NOT_LIKE:
-            case Criteria::ILIKE:
-            case Criteria::NOT_ILIKE:
+            case self::LIKE:
+            case self::NOT_LIKE:
+            case self::ILIKE:
+            case self::NOT_ILIKE:
                 // table.column LIKE ? or table.column NOT LIKE ?  (or ILIKE for Postgres)
                 // something like $c->add(BookTableMap::TITLE, 'foo%', Criteria::LIKE);
                 return new LikeCriterion($this, $column, $value, $comparison);
-            case Criteria::BINARY_NONE:
-            case Criteria::BINARY_ALL:
+            case self::BINARY_NONE:
+            case self::BINARY_ALL:
                 // table.column & ? = 0 (Similar to  "NOT IN")
                 // something like $c->add(BookTableMap::SOME_ARRAY_VAR, 26, Criteria::BINARY_NONE);
                 return new BinaryCriterion($this, $column, $value, $comparison);
@@ -639,7 +759,7 @@ class Criteria
      *
      * @return string|null The value of the object at key.
      */
-    public function getColumnName($name)
+    public function getColumnName(string $name): ?string
     {
         if (isset($this->map[$name])) {
             return $this->map[$name]->getColumn();
@@ -660,7 +780,7 @@ class Criteria
      *
      * @return array array(table => array(table.column1, table.column2))
      */
-    public function getTablesColumns()
+    public function getTablesColumns(): array
     {
         $tables = [];
         foreach ($this->keys() as $key) {
@@ -678,7 +798,7 @@ class Criteria
      *
      * @return string|null A String with the value of the object at key.
      */
-    public function getComparison($key)
+    public function getComparison(string $key): ?string
     {
         if (isset($this->map[$key])) {
             return $this->map[$key]->getComparison();
@@ -692,7 +812,7 @@ class Criteria
      *
      * @return string A String with the Database(Map) name.
      */
-    public function getDbName()
+    public function getDbName(): string
     {
         return $this->dbName;
     }
@@ -703,11 +823,13 @@ class Criteria
      *
      * @param string|null $dbName The Database (Map) name.
      *
-     * @return void
+     * @return $this
      */
-    public function setDbName($dbName = null)
+    public function setDbName(?string $dbName = null)
     {
-        $this->dbName = ($dbName === null ? Propel::getServiceContainer()->getDefaultDatasource() : $dbName);
+        $this->dbName = ($dbName ?? Propel::getServiceContainer()->getDefaultDatasource());
+
+        return $this;
     }
 
     /**
@@ -717,9 +839,9 @@ class Criteria
      * any SELECT columns or WHERE columns. This must be explicitly
      * set, of course, in order to be useful.
      *
-     * @return string
+     * @return string|null
      */
-    public function getPrimaryTableName()
+    public function getPrimaryTableName(): ?string
     {
         return $this->primaryTableName;
     }
@@ -733,11 +855,13 @@ class Criteria
      *
      * @param string $tableName
      *
-     * @return void
+     * @return $this
      */
-    public function setPrimaryTableName($tableName)
+    public function setPrimaryTableName(string $tableName)
     {
         $this->primaryTableName = $tableName;
+
+        return $this;
     }
 
     /**
@@ -747,7 +871,7 @@ class Criteria
      *
      * @return string|null The value of table for criterion at key.
      */
-    public function getTableName($name)
+    public function getTableName(string $name): ?string
     {
         if (isset($this->map[$name])) {
             return $this->map[$name]->getTable();
@@ -763,7 +887,7 @@ class Criteria
      *
      * @return mixed The value of object at key.
      */
-    public function getValue($name)
+    public function getValue(string $name)
     {
         if (isset($this->map[$name])) {
             return $this->map[$name]->getValue();
@@ -779,7 +903,7 @@ class Criteria
      *
      * @return mixed The value within the Criterion (not the Criterion object).
      */
-    public function get($key)
+    public function get(string $key)
     {
         return $this->getValue($key);
     }
@@ -799,7 +923,7 @@ class Criteria
      *
      * @return $this
      */
-    public function put($key, $value)
+    public function put(string $key, $value)
     {
         $this->add($key, $value);
 
@@ -816,7 +940,7 @@ class Criteria
      *
      * @param mixed $t Mappings to be stored in this map.
      *
-     * @return void
+     * @return $this
      */
     public function putAll($t)
     {
@@ -831,6 +955,8 @@ class Criteria
         } elseif ($t instanceof Criteria) {
             $this->joins = $t->joins;
         }
+
+        return $this;
     }
 
     /**
@@ -848,7 +974,7 @@ class Criteria
      * The name of the table must be used implicitly in the column name,
      * so the Column name must be something like 'TABLE.id'.
      *
-     * @param string|\Propel\Runtime\ActiveQuery\Criterion\AbstractCriterion $p1 The column to run the comparison on, or a Criterion object.
+     * @param \Propel\Runtime\ActiveQuery\Criterion\AbstractCriterion|string $p1 The column to run the comparison on, or a Criterion object.
      * @param mixed $value
      * @param string|int|null $comparison A String.
      *
@@ -868,7 +994,7 @@ class Criteria
     /**
      * @return string
      */
-    public function __toString()
+    public function __toString(): string
     {
         return implode(', ', $this->map) . "\n";
     }
@@ -890,13 +1016,13 @@ class Criteria
      * so the Column name must be something like 'TABLE.id'.
      *
      * @param string $name name to combine the criterion later
-     * @param string $p1 The column to run the comparison on, or AbstractCriterion object.
-     * @param mixed $value
+     * @param \Propel\Runtime\ActiveQuery\Criterion\AbstractCriterion|string $p1 The column to run the comparison on, or AbstractCriterion object.
+     * @param mixed|null $value
      * @param string|null $comparison A String.
      *
      * @return $this A modified Criteria object.
      */
-    public function addCond($name, $p1, $value = null, $comparison = null)
+    public function addCond(string $name, $p1, $value = null, ?string $comparison = null)
     {
         $this->namedCriterions[$name] = $this->getCriterionForCondition($p1, $value, $comparison);
 
@@ -914,7 +1040,7 @@ class Criteria
      *
      * @return $this
      */
-    public function combine($criterions = [], $operator = self::LOGICAL_AND, $name = null)
+    public function combine(array $criterions = [], string $operator = self::LOGICAL_AND, ?string $name = null)
     {
         $operatorMethod = (strtoupper($operator) === self::LOGICAL_AND) ? 'addAnd' : 'addOr';
         $namedCriterions = [];
@@ -947,15 +1073,15 @@ class Criteria
      * // LEFT JOIN FOO ON (PROJECT.ID = FOO.PROJECT_ID)
      * </code>
      *
-     * @param string|array $left A String with the left side of the join.
-     * @param string|array $right A String with the right side of the join.
+     * @param array|string $left A String with the left side of the join.
+     * @param array|string $right A String with the right side of the join.
      * @param string|null $joinType A String with the join operator
      *                        among Criteria::INNER_JOIN, Criteria::LEFT_JOIN,
      *                        and Criteria::RIGHT_JOIN
      *
      * @return $this A modified Criteria object.
      */
-    public function addJoin($left, $right, $joinType = null)
+    public function addJoin($left, $right, ?string $joinType = null)
     {
         if (is_array($left)) {
             $conditions = [];
@@ -991,7 +1117,7 @@ class Criteria
             $rightTableName,
             $rightColumnName,
             $rightTableAlias,
-            Join::EQUAL
+            Join::EQUAL,
         );
 
         $join->setJoinType($joinType);
@@ -1004,7 +1130,7 @@ class Criteria
     /**
      * Add a join with multiple conditions
      *
-     * @deprecated use Join::setJoinCondition($criterion) instead
+     * @deprecated Use {@link \Propel\Runtime\ActiveQuery\Join::setJoinCondition()} instead
      *
      * @see http://propel.phpdb.org/trac/ticket/167, http://propel.phpdb.org/trac/ticket/606
      *
@@ -1022,7 +1148,7 @@ class Criteria
      *
      * @return $this A modified Criteria object.
      */
-    public function addMultipleJoin($conditions, $joinType = null)
+    public function addMultipleJoin(array $conditions, ?string $joinType = null)
     {
         $join = new Join();
         $join->setIdentifierQuoting($this->isIdentifierQuotingEnabled());
@@ -1054,16 +1180,16 @@ class Criteria
                 $join->setRightTableName($rightTableName);
             }
 
-            if (!$join->getRightTableAlias()) {
+            if (!$join->getRightTableAlias() && $rightTableAlias) {
                 $join->setRightTableAlias($rightTableAlias);
             }
 
             $conditionClause = $leftTableAlias ? $leftTableAlias . '.' : ($leftTableName ? $leftTableName . '.' : '');
             $conditionClause .= $leftColumnName;
-            $conditionClause .= isset($condition[2]) ? $condition[2] : Join::EQUAL;
+            $conditionClause .= $condition[2] ?? Join::EQUAL;
             $conditionClause .= $rightTableAlias ? $rightTableAlias . '.' : ($rightTableName ? $rightTableName . '.' : '');
             $conditionClause .= $rightColumnName;
-            $criterion = $this->getNewCriterion($leftTableName . '.' . $leftColumnName, $conditionClause, Criteria::CUSTOM);
+            $criterion = $this->getNewCriterion($leftTableName . '.' . $leftColumnName, $conditionClause, self::CUSTOM);
 
             if ($joinCondition === null) {
                 $joinCondition = $criterion;
@@ -1098,9 +1224,9 @@ class Criteria
     /**
      * Get the array of Joins.
      *
-     * @return \Propel\Runtime\ActiveQuery\Join[]
+     * @return array<\Propel\Runtime\ActiveQuery\Join>
      */
-    public function getJoins()
+    public function getJoins(): array
     {
         return $this->joins;
     }
@@ -1112,7 +1238,7 @@ class Criteria
      *
      * @return \Propel\Runtime\ActiveQuery\Join A join object
      */
-    public function getJoin($name)
+    public function getJoin(string $name): Join
     {
         return $this->joins[$name];
     }
@@ -1122,7 +1248,7 @@ class Criteria
      *
      * @return bool
      */
-    public function hasJoin($name)
+    public function hasJoin(string $name): bool
     {
         return isset($this->joins[$name]);
     }
@@ -1130,12 +1256,12 @@ class Criteria
     /**
      * Adds a Criteria as subQuery in the From Clause.
      *
-     * @param \Propel\Runtime\ActiveQuery\Criteria $subQueryCriteria Criteria to build the subquery from
+     * @param self $subQueryCriteria Criteria to build the subquery from
      * @param string|null $alias alias for the subQuery
      *
      * @return $this this modified Criteria object (Fluid API)
      */
-    public function addSelectQuery(Criteria $subQueryCriteria, $alias = null)
+    public function addSelectQuery(self $subQueryCriteria, ?string $alias = null)
     {
         if ($alias === null) {
             $alias = 'alias_' . ($subQueryCriteria->forgeSelectQueryAlias() + count($this->selectQueries));
@@ -1150,7 +1276,7 @@ class Criteria
      *
      * @return bool
      */
-    public function hasSelectQueries()
+    public function hasSelectQueries(): bool
     {
         return (bool)$this->selectQueries;
     }
@@ -1158,9 +1284,9 @@ class Criteria
     /**
      * Get the associative array of Criteria for the subQueries per alias.
      *
-     * @return \Propel\Runtime\ActiveQuery\Criteria[]
+     * @return array<\Propel\Runtime\ActiveQuery\Criteria>
      */
-    public function getSelectQueries()
+    public function getSelectQueries(): array
     {
         return $this->selectQueries;
     }
@@ -1172,7 +1298,7 @@ class Criteria
      *
      * @return self
      */
-    public function getSelectQuery($alias)
+    public function getSelectQuery(string $alias): self
     {
         return $this->selectQueries[$alias];
     }
@@ -1184,7 +1310,7 @@ class Criteria
      *
      * @return bool
      */
-    public function hasSelectQuery($alias)
+    public function hasSelectQuery(string $alias): bool
     {
         return isset($this->selectQueries[$alias]);
     }
@@ -1192,7 +1318,7 @@ class Criteria
     /**
      * @return int
      */
-    public function forgeSelectQueryAlias()
+    public function forgeSelectQueryAlias(): int
     {
         $aliasNumber = 0;
         foreach ($this->getSelectQueries() as $c1) {
@@ -1236,7 +1362,7 @@ class Criteria
      *
      * @return $this Modified Criteria object (for fluent API)
      */
-    public function addSelectModifier($modifier)
+    public function addSelectModifier(string $modifier)
     {
         // only allow the keyword once
         if (!$this->hasSelectModifier($modifier)) {
@@ -1254,7 +1380,7 @@ class Criteria
      *
      * @return $this Modified Criteria object (for fluent API)
      */
-    public function removeSelectModifier($modifier)
+    public function removeSelectModifier(string $modifier)
     {
         $this->selectModifiers = array_values(array_diff($this->selectModifiers, [$modifier]));
 
@@ -1268,7 +1394,7 @@ class Criteria
      *
      * @return bool
      */
-    public function hasSelectModifier($modifier)
+    public function hasSelectModifier(string $modifier): bool
     {
         return in_array($modifier, $this->selectModifiers);
     }
@@ -1284,7 +1410,7 @@ class Criteria
     /**
      * Apply a shared read lock to be used to retrieve rows.
      *
-     * @param string[] $tableNames
+     * @param array<string> $tableNames
      * @param bool $noWait
      *
      * @return $this Modified Criteria object (for fluent API)
@@ -1299,7 +1425,7 @@ class Criteria
     /**
      * Apply an exclusive read lock to be used to retrieve rows.
      *
-     * @param string[] $tableNames
+     * @param array<string> $tableNames
      * @param bool $noWait
      *
      * @return $this Modified Criteria object (for fluent API)
@@ -1318,7 +1444,7 @@ class Criteria
      * @see Lock::EXCLUSIVE
      *
      * @param string $lockType
-     * @param string[] $tableNames
+     * @param array<string> $tableNames
      * @param bool $noWait
      *
      * @return $this Modified Criteria object (for fluent API)
@@ -1349,7 +1475,7 @@ class Criteria
      *
      * @return $this Modified Criteria object (for fluent API)
      */
-    public function setIgnoreCase($b)
+    public function setIgnoreCase(bool $b)
     {
         $this->ignoreCase = (bool)$b;
 
@@ -1361,7 +1487,7 @@ class Criteria
      *
      * @return bool True if case is ignored.
      */
-    public function isIgnoreCase()
+    public function isIgnoreCase(): bool
     {
         return $this->ignoreCase;
     }
@@ -1379,7 +1505,7 @@ class Criteria
      *
      * @return $this Modified Criteria object (for fluent API)
      */
-    public function setSingleRecord($b)
+    public function setSingleRecord(bool $b)
     {
         $this->singleRecord = (bool)$b;
 
@@ -1391,7 +1517,7 @@ class Criteria
      *
      * @return bool True if a single record is being returned.
      */
-    public function isSingleRecord()
+    public function isSingleRecord(): bool
     {
         return $this->singleRecord;
     }
@@ -1403,9 +1529,9 @@ class Criteria
      *
      * @return $this Modified Criteria object (for fluent API)
      */
-    public function setLimit($limit)
+    public function setLimit(int $limit)
     {
-        $this->limit = (int)$limit;
+        $this->limit = $limit;
 
         return $this;
     }
@@ -1415,7 +1541,7 @@ class Criteria
      *
      * @return int An int with the value for limit.
      */
-    public function getLimit()
+    public function getLimit(): int
     {
         return $this->limit;
     }
@@ -1427,9 +1553,9 @@ class Criteria
      *
      * @return $this Modified Criteria object (for fluent API)
      */
-    public function setOffset($offset)
+    public function setOffset(int $offset)
     {
-        $this->offset = (int)$offset;
+        $this->offset = $offset;
 
         return $this;
     }
@@ -1439,7 +1565,7 @@ class Criteria
      *
      * @return int An int with the value for offset.
      */
-    public function getOffset()
+    public function getOffset(): int
     {
         return $this->offset;
     }
@@ -1451,7 +1577,7 @@ class Criteria
      *
      * @return $this Modified Criteria object (for fluent API)
      */
-    public function addSelectColumn($name)
+    public function addSelectColumn(string $name)
     {
         $this->selectColumns[] = $name;
 
@@ -1465,7 +1591,7 @@ class Criteria
      *
      * @return $this Modified Criteria object (for fluent API)
      */
-    public function removeSelectColumn($name)
+    public function removeSelectColumn(string $name)
     {
         while (false !== ($key = array_search($name, $this->selectColumns, true))) {
             unset($this->selectColumns[$key]);
@@ -1481,7 +1607,7 @@ class Criteria
      *
      * @return $this Modified Criteria object (for fluent API)
      */
-    public function setComment($comment = null)
+    public function setComment(?string $comment)
     {
         $this->queryComment = $comment;
 
@@ -1491,9 +1617,9 @@ class Criteria
     /**
      * Get the query comment, that appears after the first verb in the SQL query
      *
-     * @return string The comment to add to the query, without comment sign
+     * @return string|null The comment to add to the query, without comment sign
      */
-    public function getComment()
+    public function getComment(): ?string
     {
         return $this->queryComment;
     }
@@ -1508,17 +1634,17 @@ class Criteria
      *
      * @return bool
      */
-    public function hasSelectClause()
+    public function hasSelectClause(): bool
     {
-        return !empty($this->selectColumns) || !empty($this->asColumns);
+        return (bool)$this->selectColumns || (bool)$this->asColumns;
     }
 
     /**
      * Get select columns.
      *
-     * @return array An array with the name of the select columns.
+     * @return array<string> An array with the name of the select columns.
      */
-    public function getSelectColumns()
+    public function getSelectColumns(): array
     {
         return $this->selectColumns;
     }
@@ -1540,7 +1666,7 @@ class Criteria
      *
      * @return array An array with the select modifiers.
      */
-    public function getSelectModifiers()
+    public function getSelectModifiers(): array
     {
         return $this->selectModifiers;
     }
@@ -1552,7 +1678,7 @@ class Criteria
      *
      * @return $this A modified Criteria object.
      */
-    public function addGroupByColumn($groupBy)
+    public function addGroupByColumn(string $groupBy)
     {
         $this->groupByColumns[] = $groupBy;
 
@@ -1566,7 +1692,7 @@ class Criteria
      *
      * @return $this A modified Criteria object.
      */
-    public function addAscendingOrderByColumn($name)
+    public function addAscendingOrderByColumn(string $name)
     {
         $this->orderByColumns[] = $name . ' ' . self::ASC;
 
@@ -1580,7 +1706,7 @@ class Criteria
      *
      * @return $this Modified Criteria object (for fluent API)
      */
-    public function addDescendingOrderByColumn($name)
+    public function addDescendingOrderByColumn(string $name)
     {
         $this->orderByColumns[] = $name . ' ' . self::DESC;
 
@@ -1590,9 +1716,9 @@ class Criteria
     /**
      * Get order by columns.
      *
-     * @return array An array with the name of the order columns.
+     * @return array<string> An array with the name of the order columns.
      */
-    public function getOrderByColumns()
+    public function getOrderByColumns(): array
     {
         return $this->orderByColumns;
     }
@@ -1624,9 +1750,9 @@ class Criteria
     /**
      * Get group by columns.
      *
-     * @return array
+     * @return array<string>
      */
-    public function getGroupByColumns()
+    public function getGroupByColumns(): array
     {
         return $this->groupByColumns;
     }
@@ -1636,7 +1762,7 @@ class Criteria
      *
      * @return \Propel\Runtime\ActiveQuery\Criterion\AbstractCriterion|null A Criterion object that is the having clause.
      */
-    public function getHaving()
+    public function getHaving(): ?AbstractCriterion
     {
         return $this->having;
     }
@@ -1648,7 +1774,7 @@ class Criteria
      *
      * @return mixed|null The removed value.
      */
-    public function remove($key)
+    public function remove(string $key)
     {
         if (!isset($this->map[$key])) {
             return null;
@@ -1669,7 +1795,7 @@ class Criteria
      *
      * @return string A String with the representation of the Criteria.
      */
-    public function toString()
+    public function toString(): string
     {
         $sb = 'Criteria:';
         try {
@@ -1696,7 +1822,7 @@ class Criteria
      *
      * @return int
      */
-    public function size()
+    public function size(): int
     {
         return count($this->map);
     }
@@ -1705,16 +1831,12 @@ class Criteria
      * This method checks another Criteria to see if they contain
      * the same attributes and hashtable entries.
      *
-     * @param \Propel\Runtime\ActiveQuery\Criteria|null $crit
+     * @param self $crit
      *
      * @return bool
      */
-    public function equals($crit)
+    public function equals(self $crit): bool
     {
-        if ($crit === null || !($crit instanceof Criteria)) {
-            return false;
-        }
-
         if ($this === $crit) {
             return true;
         }
@@ -1754,7 +1876,7 @@ class Criteria
                 }
 
                 foreach ($joins as $key => $join) {
-                    if (!$join->equals($this->joins[$key])) {
+                    if (empty($this->joins[$key]) || !$join->equals($this->joins[$key])) {
                         return false;
                     }
                 }
@@ -1781,7 +1903,7 @@ class Criteria
      * Add the content of a Criteria to the current Criteria
      * In case of conflict, the current Criteria keeps its properties
      *
-     * @param \Propel\Runtime\ActiveQuery\Criteria $criteria The criteria to read properties from
+     * @param self $criteria The criteria to read properties from
      * @param string|null $operator The logical operator used to combine conditions
      *                           Defaults to Criteria::LOGICAL_AND, also accepts Criteria::LOGICAL_OR
      *                           This parameter is deprecated, use _or() instead
@@ -1790,7 +1912,7 @@ class Criteria
      *
      * @return $this The current criteria object
      */
-    public function mergeWith(Criteria $criteria, $operator = null)
+    public function mergeWith(self $criteria, ?string $operator = null)
     {
         // merge limit
         $limit = $criteria->getLimit();
@@ -1821,7 +1943,7 @@ class Criteria
 
         // merge as columns
         $commonAsColumns = array_intersect_key($this->getAsColumns(), $criteria->getAsColumns());
-        if (!empty($commonAsColumns)) {
+        if ($commonAsColumns) {
             throw new LogicException('The given criteria contains an AsColumn with an alias already existing in the current object');
         }
         $this->asColumns = array_merge($this->getAsColumns(), $criteria->getAsColumns());
@@ -1835,14 +1957,14 @@ class Criteria
         $this->groupByColumns = array_unique($groupByColumns);
 
         // merge where conditions
-        if ($operator === Criteria::LOGICAL_OR) {
+        if ($operator === self::LOGICAL_OR) {
             $this->_or();
         }
         $isFirstCondition = true;
         foreach ($criteria->getMap() as $key => $criterion) {
-            if ($isFirstCondition && $this->defaultCombineOperator === Criteria::LOGICAL_OR) {
+            if ($isFirstCondition && $this->defaultCombineOperator === self::LOGICAL_OR) {
                 $this->addOr($criterion, null, null, false);
-                $this->defaultCombineOperator = Criteria::LOGICAL_AND;
+                $this->defaultCombineOperator = self::LOGICAL_AND;
             } elseif ($this->containsKey($key)) {
                 $this->addAnd($criterion);
             } else {
@@ -1863,7 +1985,7 @@ class Criteria
 
         // merge alias
         $commonAliases = array_intersect_key($this->getAliases(), $criteria->getAliases());
-        if (!empty($commonAliases)) {
+        if ($commonAliases) {
             throw new LogicException('The given criteria contains an alias already existing in the current object');
         }
         $this->aliases = array_merge($this->getAliases(), $criteria->getAliases());
@@ -1914,13 +2036,13 @@ class Criteria
      *  - Otherwise, create a classic Criterion based on a column name and a comparison.
      *    <code>$c->getCriterionForCondition(BookTableMap::TITLE, 'War%', Criteria::LIKE);</code>
      *
-     * @param mixed $p1 A Criterion, or a SQL clause with a question mark placeholder, or a column name
-     * @param mixed $value The value to bind in the condition
-     * @param mixed $comparison A Criteria class constant, or a PDO::PARAM_ class constant
+     * @param \Propel\Runtime\ActiveQuery\Criterion\AbstractCriterion|string $p1 A Criterion, or a SQL clause with a question mark placeholder, or a column name
+     * @param mixed|null $value The value to bind in the condition
+     * @param string|int|null $comparison A Criteria class constant, or a PDO::PARAM_ class constant
      *
      * @return \Propel\Runtime\ActiveQuery\Criterion\AbstractCriterion
      */
-    protected function getCriterionForCondition($p1, $value = null, $comparison = null)
+    protected function getCriterionForCondition($p1, $value = null, $comparison = null): AbstractCriterion
     {
         if ($p1 instanceof AbstractCriterion) {
             // it's already a Criterion, so ignore $value and $comparison
@@ -1929,7 +2051,7 @@ class Criteria
 
         // $comparison is one of Criteria's constants, or a PDO binding type
         // something like $c->add(BookTableMap::TITLE, 'War%', Criteria::LIKE);
-        return $this->getNewCriterion($p1, $value, $comparison);
+        return $this->getNewCriterion((string)$p1, $value, $comparison);
     }
 
     /**
@@ -1951,7 +2073,7 @@ class Criteria
      *
      * @return $this A modified Criteria object.
      */
-    public function addAnd($p1, $p2 = null, $p3 = null, $preferColumnCondition = true)
+    public function addAnd($p1, $p2 = null, $p3 = null, bool $preferColumnCondition = true)
     {
         $criterion = $this->getCriterionForCondition($p1, $p2, $p3);
 
@@ -1986,7 +2108,7 @@ class Criteria
      *
      * @return $this A modified Criteria object.
      */
-    public function addOr($p1, $p2 = null, $p3 = null, $preferColumnCondition = true)
+    public function addOr($p1, $p2 = null, $p3 = null, bool $preferColumnCondition = true)
     {
         $rightCriterion = $this->getCriterionForCondition($p1, $p2, $p3);
 
@@ -2008,7 +2130,7 @@ class Criteria
      *
      * @see Criteria::add()
      *
-     * @param string|\Propel\Runtime\ActiveQuery\Criterion\AbstractCriterion $p1 The column to run the comparison on (e.g. BookTableMap::ID), or Criterion object
+     * @param \Propel\Runtime\ActiveQuery\Criterion\AbstractCriterion|string $p1 The column to run the comparison on (e.g. BookTableMap::ID), or Criterion object
      * @param mixed $value
      * @param string|null $operator A String, like Criteria::EQUAL.
      * @param bool $preferColumnCondition If true, the condition is combined with an existing condition on the same column
@@ -2017,10 +2139,10 @@ class Criteria
      *
      * @return $this A modified Criteria object.
      */
-    public function addUsingOperator($p1, $value = null, $operator = null, $preferColumnCondition = true)
+    public function addUsingOperator($p1, $value = null, ?string $operator = null, bool $preferColumnCondition = true)
     {
-        if ($this->defaultCombineOperator === Criteria::LOGICAL_OR) {
-            $this->defaultCombineOperator = Criteria::LOGICAL_AND;
+        if ($this->defaultCombineOperator === self::LOGICAL_OR) {
+            $this->defaultCombineOperator = self::LOGICAL_AND;
 
             $this->addOr($p1, $value, $operator, $preferColumnCondition);
 
@@ -2044,7 +2166,7 @@ class Criteria
      *
      * @return string
      */
-    public function createSelectSql(&$params)
+    public function createSelectSql(array &$params): string
     {
         $preparedStatementDto = SelectQuerySqlBuilder::createSelectSql($this, $params);
         $params = $preparedStatementDto->getParameters();
@@ -2059,7 +2181,7 @@ class Criteria
      *
      * @return string the column name replacement
      */
-    protected function doReplaceNameInExpression($matches)
+    protected function doReplaceNameInExpression(array $matches): string
     {
         return $this->quoteIdentifier($matches[0]);
     }
@@ -2072,7 +2194,7 @@ class Criteria
      *
      * @return string
      */
-    public function quoteIdentifier($string, $tableName = '')
+    public function quoteIdentifier(string $string, string $tableName = ''): string
     {
         if ($this->isIdentifierQuotingEnabled()) {
             $adapter = Propel::getServiceContainer()->getAdapter($this->getDbName());
@@ -2113,7 +2235,7 @@ class Criteria
      *
      * @return bool Whether the method managed to find and replace at least one column name
      */
-    public function replaceNames(&$sql)
+    public function replaceNames(string &$sql): bool
     {
         $this->replacedColumns = [];
         $this->currentAlias = '';
@@ -2198,11 +2320,11 @@ class Criteria
     }
 
     /**
-     * @param \Propel\Runtime\ActiveQuery\Criteria|null $criteria
+     * @param self|null $criteria
      *
      * @return \Propel\Runtime\Map\ColumnMap|null
      */
-    public function getPrimaryKey(?Criteria $criteria = null)
+    public function getPrimaryKey(?self $criteria = null): ?ColumnMap
     {
         if (!$criteria) {
             $criteria = $this;
@@ -2214,11 +2336,11 @@ class Criteria
 
         $pk = null;
 
-        if (!empty($table)) {
+        if ($table) {
             $dbMap = Propel::getServiceContainer()->getDatabaseMap($criteria->getDbName());
 
             $pks = $dbMap->getTable($table)->getPrimaryKeys();
-            if (!empty($pks)) {
+            if ($pks) {
                 $pk = array_shift($pks);
             }
         }
@@ -2235,7 +2357,7 @@ class Criteria
      * WHERE some_column = some value AND could_have_another_column =
      * another value AND so on.
      *
-     * @param array|\Propel\Runtime\ActiveQuery\Criteria $updateValues A Criteria object containing values used in set clause.
+     * @param \Propel\Runtime\ActiveQuery\Criteria|array $updateValues A Criteria object containing values used in set clause.
      * @param \Propel\Runtime\Connection\ConnectionInterface $con The ConnectionInterface connection object to use.
      *
      * @return int The number of rows affected by last update statement.
@@ -2244,7 +2366,7 @@ class Criteria
      *             Note that the return value does require that this information is returned
      *             (supported) by the Propel db driver.
      */
-    public function doUpdate($updateValues, ConnectionInterface $con)
+    public function doUpdate($updateValues, ConnectionInterface $con): int
     {
         return UpdateQueryExecutor::execute($this, $updateValues, $con);
     }
@@ -2254,7 +2376,7 @@ class Criteria
      *
      * @return \Propel\Runtime\DataFetcher\DataFetcherInterface
      */
-    public function doCount(?ConnectionInterface $con = null)
+    public function doCount(?ConnectionInterface $con = null): DataFetcherInterface
     {
         return CountQueryExecutor::execute($this, $con);
     }
@@ -2266,7 +2388,7 @@ class Criteria
      *
      * @return bool
      */
-    public function needsSelectAliases()
+    public function needsSelectAliases(): bool
     {
         $columnNames = [];
         foreach ($this->getSelectColumns() as $fullyQualifiedColumnName) {
@@ -2290,9 +2412,9 @@ class Criteria
      *
      * @param \Propel\Runtime\Connection\ConnectionInterface|null $con a connection object
      *
-     * @return int the number of deleted rows
+     * @return int The number of deleted rows
      */
-    public function doDelete(?ConnectionInterface $con = null)
+    public function doDelete(?ConnectionInterface $con = null): int
     {
         return DeleteQueryExecutor::execute($this, $con);
     }
@@ -2303,9 +2425,9 @@ class Criteria
      *
      * @param \Propel\Runtime\Connection\ConnectionInterface|null $con a connection object
      *
-     * @return int the number of deleted rows
+     * @return int The number of deleted rows
      */
-    public function doDeleteAll(?ConnectionInterface $con = null)
+    public function doDeleteAll(?ConnectionInterface $con = null): int
     {
         return DeleteAllQueryExecutor::execute($this, $con);
     }
@@ -2317,7 +2439,7 @@ class Criteria
      *
      * @return \Propel\Runtime\DataFetcher\DataFetcherInterface A dataFetcher using the connection, ready to be fetched
      */
-    public function doSelect(?ConnectionInterface $con = null)
+    public function doSelect(?ConnectionInterface $con = null): DataFetcherInterface
     {
         return SelectQueryExecutor::execute($this, $con);
     }
@@ -2329,7 +2451,7 @@ class Criteria
      */
     public function _or()
     {
-        $this->defaultCombineOperator = Criteria::LOGICAL_OR;
+        $this->defaultCombineOperator = self::LOGICAL_OR;
 
         return $this;
     }
@@ -2339,7 +2461,7 @@ class Criteria
      */
     public function _and()
     {
-        $this->defaultCombineOperator = Criteria::LOGICAL_AND;
+        $this->defaultCombineOperator = self::LOGICAL_AND;
 
         return $this;
     }
@@ -2351,12 +2473,14 @@ class Criteria
      * or a PropelConditionalProxy instance otherwise.
      * Allows for conditional statements in a fluid interface.
      *
-     * @param bool $cond
+     * @param mixed $cond Casts to bool for variable evaluation
      *
      * @return \Propel\Runtime\Util\PropelConditionalProxy|$this
      */
     public function _if($cond)
     {
+        $cond = (bool)$cond; // Intentionally not typing the param to allow for evaluation inside this function
+
         $this->conditionalProxy = new PropelConditionalProxy($this, $cond, $this->conditionalProxy);
 
         return $this->conditionalProxy->getCriteriaOrProxy();
@@ -2366,7 +2490,7 @@ class Criteria
      * Returns a PropelConditionalProxy instance.
      * Allows for conditional statements in a fluid interface.
      *
-     * @param bool $cond ignored
+     * @param mixed $cond Casts to bool for variable evaluation
      *
      * @throws \Propel\Runtime\Exception\LogicException
      *
@@ -2374,6 +2498,8 @@ class Criteria
      */
     public function _elseif($cond)
     {
+        $cond = (bool)$cond; // Intentionally not typing the param to allow for evaluation inside this function
+
         if (!$this->conditionalProxy) {
             throw new LogicException(__METHOD__ . ' must be called after _if()');
         }
@@ -2445,7 +2571,7 @@ class Criteria
     /**
      * @return bool
      */
-    public function isIdentifierQuotingEnabled()
+    public function isIdentifierQuotingEnabled(): bool
     {
         return $this->identifierQuoting;
     }
@@ -2453,10 +2579,12 @@ class Criteria
     /**
      * @param bool $identifierQuoting
      *
-     * @return void
+     * @return $this
      */
-    public function setIdentifierQuoting($identifierQuoting)
+    public function setIdentifierQuoting(bool $identifierQuoting)
     {
         $this->identifierQuoting = $identifierQuoting;
+
+        return $this;
     }
 }

@@ -22,6 +22,9 @@ use Symfony\Component\Finder\SplFileInfo;
  */
 class BehaviorLocator
 {
+    /**
+     * @var string
+     */
     public const BEHAVIOR_PACKAGE_TYPE = 'propel-behavior';
 
     /**
@@ -35,20 +38,12 @@ class BehaviorLocator
     private $composerDir;
 
     /**
-     * @deprecated Unused.
-     *
-     * @var \Propel\Generator\Config\GeneratorConfigInterface
-     */
-    private $generatorConfig;
-
-    /**
      * Creates the composer finder
      *
      * @param \Propel\Generator\Config\GeneratorConfigInterface|null $config build config
      */
     public function __construct(?GeneratorConfigInterface $config = null)
     {
-        $this->generatorConfig = $config;
         if ($config !== null) {
             $this->composerDir = $config->get()['paths']['composerDir'];
         }
@@ -61,7 +56,7 @@ class BehaviorLocator
      *
      * @return \Symfony\Component\Finder\SplFileInfo|null The found composer file or null if composer file isn't found
      */
-    private function findComposerFile($fileName)
+    private function findComposerFile(string $fileName): ?SplFileInfo
     {
         if ($this->composerDir !== null) {
             $filePath = $this->composerDir . '/' . $fileName;
@@ -88,7 +83,7 @@ class BehaviorLocator
      *
      * @return \Symfony\Component\Finder\SplFileInfo|null The found composer.lock or null if composer.lock isn't found
      */
-    private function findComposerLock()
+    private function findComposerLock(): ?SplFileInfo
     {
         return $this->findComposerFile('composer.lock');
     }
@@ -98,7 +93,7 @@ class BehaviorLocator
      *
      * @return \Symfony\Component\Finder\SplFileInfo|null the found composer.json or null if composer.json isn't found
      */
-    private function findComposerJson()
+    private function findComposerJson(): ?SplFileInfo
     {
         return $this->findComposerFile('composer.json');
     }
@@ -106,15 +101,15 @@ class BehaviorLocator
     /**
      * Returns the directories to search the composer lock file in
      *
-     * @return string[]
+     * @return array<string>
      */
     private function getSearchDirs(): array
     {
         return [
             getcwd(),
-            getcwd() . '/../',                   // cwd is a subfolder
-            __DIR__ . '/../../../../../../../',  // vendor/propel/propel
-            __DIR__ . '/../../../../',            // propel development environment
+            getcwd() . '/../', // cwd is a subfolder
+            __DIR__ . '/../../../../../../../', // vendor/propel/propel
+            __DIR__ . '/../../../../', // propel development environment
         ];
     }
 
@@ -123,7 +118,7 @@ class BehaviorLocator
      *
      * @return array behaviors
      */
-    public function getBehaviors()
+    public function getBehaviors(): array
     {
         if ($this->behaviors === null) {
             // find behaviors in composer.lock file
@@ -159,7 +154,7 @@ class BehaviorLocator
      *
      * @return string the class name
      */
-    public function getBehavior($name)
+    public function getBehavior(string $name): string
     {
         if (strpos($name, '\\') !== false) {
             $class = $name;
@@ -189,7 +184,7 @@ class BehaviorLocator
      *
      * @return string The behavior fully qualified class name
      */
-    private function getCoreBehavior($name)
+    private function getCoreBehavior(string $name): string
     {
         $generator = new PhpNameGenerator();
         $phpName = $generator->generateName([$name, PhpNameGenerator::CONV_METHOD_PHPNAME]);
@@ -235,7 +230,7 @@ class BehaviorLocator
      *
      * @return array|null Behavior data
      */
-    private function loadBehavior($package)
+    private function loadBehavior(array $package): ?array
     {
         if (isset($package['type']) && $package['type'] == self::BEHAVIOR_PACKAGE_TYPE) {
             // find propel behavior information

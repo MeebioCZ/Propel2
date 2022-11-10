@@ -23,7 +23,7 @@ class DeleteAllQueryExecutor extends AbstractQueryExecutor
      */
     public static function execute(Criteria $criteria, ?ConnectionInterface $con = null): int
     {
-        $executor = new DeleteAllQueryExecutor($criteria, $con);
+        $executor = new self($criteria, $con);
 
         return $executor->runDeleteAll();
     }
@@ -33,7 +33,7 @@ class DeleteAllQueryExecutor extends AbstractQueryExecutor
      *
      * @throws \Propel\Runtime\Exception\PropelException
      *
-     * @return int the number of deleted rows
+     * @return int The number of deleted rows
      */
     protected function runDeleteAll(): int
     {
@@ -47,6 +47,8 @@ class DeleteAllQueryExecutor extends AbstractQueryExecutor
         }
 
         $preparedStatementDto = DeleteQuerySqlBuilder::createDeleteAllSql($this->criteria, $tableName);
+
+        /** @var \Propel\Runtime\Connection\StatementInterface $stmt */
         $stmt = $this->executeStatement($preparedStatementDto);
 
         return $stmt->rowCount();

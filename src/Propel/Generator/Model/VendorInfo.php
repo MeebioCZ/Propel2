@@ -32,7 +32,7 @@ class VendorInfo extends MappingModel
      * @param string|null $type RDBMS type (optional)
      * @param array $parameters An associative array of vendor's parameters (optional)
      */
-    public function __construct($type = null, array $parameters = [])
+    public function __construct(?string $type = null, array $parameters = [])
     {
         $this->parameters = [];
 
@@ -52,7 +52,7 @@ class VendorInfo extends MappingModel
      *
      * @return void
      */
-    public function setType($type)
+    public function setType(string $type): void
     {
         $this->type = $type;
     }
@@ -60,9 +60,9 @@ class VendorInfo extends MappingModel
     /**
      * Returns the RDBMS type for this vendor specific information.
      *
-     * @return string
+     * @return string|null
      */
-    public function getType()
+    public function getType(): ?string
     {
         return $this->type;
     }
@@ -75,7 +75,7 @@ class VendorInfo extends MappingModel
      *
      * @return void
      */
-    public function setParameter($name, $value)
+    public function setParameter(string $name, $value): void
     {
         $this->parameters[$name] = $value;
     }
@@ -87,19 +87,19 @@ class VendorInfo extends MappingModel
      *
      * @return mixed
      */
-    public function getParameter($name)
+    public function getParameter(string $name)
     {
-        return isset($this->parameters[$name]) ? $this->parameters[$name] : null;
+        return $this->parameters[$name] ?? null;
     }
 
     /**
-     * Returns whether or not a parameter exists.
+     * Returns whether a parameter exists.
      *
      * @param string $name
      *
      * @return bool
      */
-    public function hasParameter($name)
+    public function hasParameter(string $name): bool
     {
         return isset($this->parameters[$name]);
     }
@@ -111,7 +111,7 @@ class VendorInfo extends MappingModel
      *
      * @return void
      */
-    public function setParameters(array $parameters = [])
+    public function setParameters(array $parameters = []): void
     {
         $this->parameters = $parameters;
     }
@@ -122,19 +122,19 @@ class VendorInfo extends MappingModel
      *
      * @return array
      */
-    public function getParameters()
+    public function getParameters(): array
     {
         return $this->parameters;
     }
 
     /**
-     * Returns whether or not this vendor info is empty.
+     * Returns whether this vendor info is empty.
      *
      * @return bool
      */
-    public function isEmpty()
+    public function isEmpty(): bool
     {
-        return empty($this->parameters);
+        return !$this->parameters;
     }
 
     /**
@@ -142,13 +142,13 @@ class VendorInfo extends MappingModel
      *
      * @param \Propel\Generator\Model\VendorInfo $info
      *
-     * @return \Propel\Generator\Model\VendorInfo
+     * @return self
      */
-    public function getMergedVendorInfo(VendorInfo $info)
+    public function getMergedVendorInfo(VendorInfo $info): self
     {
         $params = array_merge($this->parameters, $info->getParameters());
 
-        $newInfo = new VendorInfo($this->type);
+        $newInfo = new self($this->type);
         $newInfo->setParameters($params);
 
         return $newInfo;
@@ -157,7 +157,7 @@ class VendorInfo extends MappingModel
     /**
      * @return void
      */
-    protected function setupObject()
+    protected function setupObject(): void
     {
         $this->type = $this->getAttribute('type');
     }

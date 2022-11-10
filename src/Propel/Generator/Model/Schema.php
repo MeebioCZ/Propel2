@@ -25,7 +25,7 @@ use Propel\Generator\Schema\Dumper\XmlDumper;
 class Schema
 {
     /**
-     * @var \Propel\Generator\Model\Database[]
+     * @var array<\Propel\Generator\Model\Database>
      */
     private $databases;
 
@@ -72,7 +72,7 @@ class Schema
      *
      * @return void
      */
-    public function setPlatform(PlatformInterface $platform)
+    public function setPlatform(PlatformInterface $platform): void
     {
         $this->platform = $platform;
     }
@@ -83,7 +83,7 @@ class Schema
      *
      * @return \Propel\Generator\Platform\PlatformInterface
      */
-    public function getPlatform()
+    public function getPlatform(): PlatformInterface
     {
         return $this->platform;
     }
@@ -95,7 +95,7 @@ class Schema
      *
      * @return void
      */
-    public function setGeneratorConfig(GeneratorConfigInterface $generatorConfig)
+    public function setGeneratorConfig(GeneratorConfigInterface $generatorConfig): void
     {
         $this->generatorConfig = $generatorConfig;
     }
@@ -103,9 +103,9 @@ class Schema
     /**
      * Returns the generator configuration
      *
-     * @return \Propel\Generator\Config\GeneratorConfigInterface
+     * @return \Propel\Generator\Config\GeneratorConfigInterface|null
      */
-    public function getGeneratorConfig()
+    public function getGeneratorConfig(): ?GeneratorConfigInterface
     {
         return $this->generatorConfig;
     }
@@ -117,7 +117,7 @@ class Schema
      *
      * @return void
      */
-    public function setName($name)
+    public function setName(string $name): void
     {
         $this->name = $name;
     }
@@ -127,7 +127,7 @@ class Schema
      *
      * @return string
      */
-    public function getName()
+    public function getName(): string
     {
         return $this->name;
     }
@@ -137,7 +137,7 @@ class Schema
      *
      * @return string
      */
-    public function getShortName()
+    public function getShortName(): string
     {
         return str_replace('-schema', '', $this->name);
     }
@@ -145,14 +145,14 @@ class Schema
     /**
      * Returns an array of all databases.
      *
-     * The first boolean parameter tells whether or not to run the
+     * The first boolean parameter tells whether to run the
      * final initialization process.
      *
      * @param bool $doFinalInitialization
      *
-     * @return \Propel\Generator\Model\Database[]
+     * @return array<\Propel\Generator\Model\Database>
      */
-    public function getDatabases($doFinalInitialization = true)
+    public function getDatabases(bool $doFinalInitialization = true): array
     {
         // this is temporary until we'll have a clean solution
         // for packaging datamodels/requiring schemas
@@ -164,11 +164,11 @@ class Schema
     }
 
     /**
-     * Returns whether or not this schema has multiple databases.
+     * Returns whether this schema has multiple databases.
      *
      * @return bool
      */
-    public function hasMultipleDatabases()
+    public function hasMultipleDatabases(): bool
     {
         return count($this->databases) > 1;
     }
@@ -179,9 +179,9 @@ class Schema
      * @param string|null $name
      * @param bool $doFinalInitialization
      *
-     * @return \Propel\Generator\Model\Database
+     * @return \Propel\Generator\Model\Database|null
      */
-    public function getDatabase($name = null, $doFinalInitialization = true)
+    public function getDatabase(?string $name = null, bool $doFinalInitialization = true): ?Database
     {
         // this is temporary until we'll have a clean solution
         // for packaging datamodels/requiring schemas
@@ -206,14 +206,14 @@ class Schema
     }
 
     /**
-     * Returns whether or not a database with the specified name exists in this
+     * Returns whether a database with the specified name exists in this
      * schema.
      *
      * @param string $name
      *
      * @return bool
      */
-    public function hasDatabase($name)
+    public function hasDatabase(string $name): bool
     {
         foreach ($this->databases as $database) {
             if ($database->getName() === $name) {
@@ -233,7 +233,7 @@ class Schema
      *
      * @return \Propel\Generator\Model\Database
      */
-    public function addDatabase($database)
+    public function addDatabase($database): Database
     {
         if ($database instanceof Database) {
             $platform = null;
@@ -243,7 +243,7 @@ class Schema
                     $platform = $config->getConfiguredPlatform(null, $database->getName());
                 }
 
-                $database->setPlatform($platform ? $platform : $this->platform);
+                $database->setPlatform($platform ?: $this->platform);
             }
             $this->databases[] = $database;
 
@@ -263,7 +263,7 @@ class Schema
      *
      * @return void
      */
-    public function doFinalInitialization()
+    public function doFinalInitialization(): void
     {
         if (!$this->isInitialized) {
             foreach ($this->databases as $database) {
@@ -276,13 +276,13 @@ class Schema
     /**
      * Merge other Schema objects together into this Schema object.
      *
-     * @param \Propel\Generator\Model\Schema[] $schemas
+     * @param array<\Propel\Generator\Model\Schema> $schemas
      *
      * @throws \Propel\Generator\Exception\EngineException
      *
      * @return void
      */
-    public function joinSchemas(array $schemas)
+    public function joinSchemas(array $schemas): void
     {
         foreach ($schemas as $schema) {
             foreach ($schema->getDatabases(false) as $addDb) {
@@ -319,7 +319,7 @@ class Schema
      *
      * @return int
      */
-    public function countTables()
+    public function countTables(): int
     {
         $nb = 0;
         foreach ($this->getDatabases() as $database) {
@@ -335,7 +335,7 @@ class Schema
      *
      * @return string Representation in xml format
      */
-    public function toString()
+    public function toString(): string
     {
         $dumper = new XmlDumper();
 
@@ -349,7 +349,7 @@ class Schema
      *
      * @return string
      */
-    public function __toString()
+    public function __toString(): string
     {
         return $this->toString();
     }

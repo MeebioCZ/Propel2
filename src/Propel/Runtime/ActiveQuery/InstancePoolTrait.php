@@ -14,7 +14,7 @@ use Propel\Runtime\Propel;
 trait InstancePoolTrait
 {
     /**
-     * @var object[]
+     * @var array<object>
      */
     public static $instances = [];
 
@@ -24,23 +24,26 @@ trait InstancePoolTrait
      *
      * @return void
      */
-    public static function addInstanceToPool($object, $key = null)
+    public static function addInstanceToPool(object $object, ?string $key = null): void
     {
-        if (Propel::isInstancePoolingEnabled()) {
-            if ($key === null) {
-                $key = static::getInstanceKey($object);
-            }
-
-            self::$instances[$key] = $object;
+        if (!Propel::isInstancePoolingEnabled()) {
+            return;
         }
+        if ($key === null) {
+            $key = static::getInstanceKey($object);
+        }
+        if (!$key) {
+            return;
+        }
+        self::$instances[$key] = $object;
     }
 
     /**
      * @param mixed $value
      *
-     * @return string
+     * @return string|null
      */
-    public static function getInstanceKey($value)
+    public static function getInstanceKey($value): ?string
     {
         if (!($value instanceof Criteria) && is_object($value)) {
             $pk = $value->getPrimaryKey();
@@ -58,6 +61,8 @@ trait InstancePoolTrait
             // assume we've been passed a primary key
             return (string)$value;
         }
+
+        return null;
     }
 
     /**
@@ -65,7 +70,7 @@ trait InstancePoolTrait
      *
      * @return void
      */
-    public static function removeInstanceFromPool($value)
+    public static function removeInstanceFromPool($value): void
     {
         if (Propel::isInstancePoolingEnabled() && $value !== null) {
             $key = static::getInstanceKey($value);
@@ -78,25 +83,27 @@ trait InstancePoolTrait
     }
 
     /**
-     * @param string $key
+     * @param string|null $key
      *
      * @return object|null
      */
-    public static function getInstanceFromPool($key)
+    public static function getInstanceFromPool(?string $key): ?object
     {
-        if (Propel::isInstancePoolingEnabled()) {
-            if (isset(self::$instances[$key])) {
-                return self::$instances[$key];
-            }
+        if ($key === null || !Propel::isInstancePoolingEnabled()) {
+            return null;
         }
 
-        return null;
+        if (!isset(self::$instances[$key])) {
+            return null;
+        }
+
+        return self::$instances[$key];
     }
 
     /**
      * @return void
      */
-    public static function clearInstancePool()
+    public static function clearInstancePool(): void
     {
         self::$instances = [];
     }
@@ -104,7 +111,7 @@ trait InstancePoolTrait
     /**
      * @return void
      */
-    public static function clearRelatedInstancePool()
+    public static function clearRelatedInstancePool(): void
     {
     }
 }

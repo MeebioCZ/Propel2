@@ -23,7 +23,7 @@ class UpdateQueryExecutor extends AbstractQueryExecutor
      */
     public static function execute(Criteria $criteria, Criteria $updateValues, ?ConnectionInterface $con = null): int
     {
-        $executor = new UpdateQueryExecutor($criteria, $con);
+        $executor = new self($criteria, $con);
 
         return $executor->runUpdate($updateValues);
     }
@@ -64,6 +64,7 @@ class UpdateQueryExecutor extends AbstractQueryExecutor
         $affectedRows = 0;
         foreach ($tablesColumns as $tableName => $columns) {
             $preparedStatementDto = $builder->build($tableName, $columns);
+            /** @var \Propel\Runtime\Connection\StatementInterface $stmt */
             $stmt = $this->executeStatement($preparedStatementDto);
             $affectedRows += $stmt->rowCount();
         }

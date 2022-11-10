@@ -55,7 +55,7 @@ abstract class AbstractSqlQueryBuilder
      *
      * @param string|null $tableName
      *
-     * @return string[]
+     * @return array<string>
      */
     protected function getTableNameWithAlias(?string $tableName): array
     {
@@ -73,7 +73,7 @@ abstract class AbstractSqlQueryBuilder
      *
      * @return string
      */
-    public function quoteIdentifierTable(string $rawTableName)
+    public function quoteIdentifierTable(string $rawTableName): string
     {
         if ($this->criteria->isIdentifierQuotingEnabled()) {
             return $this->adapter->quoteIdentifierTable($rawTableName);
@@ -96,12 +96,12 @@ abstract class AbstractSqlQueryBuilder
     }
 
     /**
-     * @param string[] $columnNames
+     * @param array<string> $columnNames
      * @param \Propel\Runtime\ActiveQuery\Criteria|null $values
      *
      * @return array
      */
-    public function buildParams($columnNames, ?Criteria $values = null)
+    public function buildParams(array $columnNames, ?Criteria $values = null): array
     {
         if (!$values) {
             $values = $this->criteria;
@@ -127,7 +127,7 @@ abstract class AbstractSqlQueryBuilder
      * Build sql statement from a criteria and add it to the given statement collector.
      *
      * @param \Propel\Runtime\ActiveQuery\Criterion\AbstractCriterion $criterion
-     * @param mixed[]|null $params
+     * @param array<mixed>|null $params
      *
      * @return string
      */

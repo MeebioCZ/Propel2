@@ -222,7 +222,9 @@ class GeneratorConfigTest extends TestCase
      */
     public function testGetConfiguredBuilder()
     {
-        $stubTable = $this->getMockBuilder('\\Propel\\Generator\\Model\\Table')->getMock();
+        $stubTable = $this->getMockBuilder('\\Propel\\Generator\\Model\\Table')
+            ->setConstructorArgs(['foo'])
+            ->getMock();
         $actual = $this->generatorConfig->getConfiguredBuilder($stubTable, 'query');
 
         $this->assertInstanceOf('\\Propel\\Generator\\Builder\\Om\\QueryBuilder', $actual);
@@ -233,9 +235,11 @@ class GeneratorConfigTest extends TestCase
      */
     public function testGetConfiguredBuilderWrongTypeThrowsException()
     {
-        $this->expectException(ClassNotFoundException::class);
+        $this->expectException(InvalidArgumentException::class);
 
-        $stubTable = $this->getMockBuilder('\\Propel\\Generator\\Model\\Table')->getMock();
+        $stubTable = $this->getMockBuilder('\\Propel\\Generator\\Model\\Table')
+            ->setConstructorArgs(['foo'])
+            ->getMock();
         $actual = $this->generatorConfig->getConfiguredBuilder($stubTable, 'bad_type');
     }
 

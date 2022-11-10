@@ -19,13 +19,13 @@ class SelectQuerySqlBuilder extends AbstractSqlQueryBuilder
 {
     /**
      * @param \Propel\Runtime\ActiveQuery\Criteria $criteria
-     * @param mixed[] $params
+     * @param array<mixed> $params
      *
      * @return \Propel\Runtime\ActiveQuery\SqlBuilder\PreparedStatementDto
      */
     public static function createSelectSql(Criteria $criteria, array &$params = []): PreparedStatementDto
     {
-        $builder = new SelectQuerySqlBuilder($criteria);
+        $builder = new self($criteria);
 
         return $builder->build($params);
     }
@@ -38,7 +38,7 @@ class SelectQuerySqlBuilder extends AbstractSqlQueryBuilder
      * to be set before the statement is executed. The reason we do it this way
      * is to let the PDO layer handle all escaping & value formatting.
      *
-     * @param mixed[] $params
+     * @param array<mixed> $params
      *
      * @return \Propel\Runtime\ActiveQuery\SqlBuilder\PreparedStatementDto
      */
@@ -92,7 +92,7 @@ class SelectQuerySqlBuilder extends AbstractSqlQueryBuilder
     }
 
     /**
-     * @param string[] $sourceTableNamesCollector
+     * @param array<string> $sourceTableNamesCollector
      *
      * @return string
      */
@@ -105,9 +105,9 @@ class SelectQuerySqlBuilder extends AbstractSqlQueryBuilder
     }
 
     /**
-     * @param mixed[]|null $params
-     * @param string[] $sourceTableNames
-     * @param string[] $joinClause
+     * @param array<mixed>|null $params
+     * @param array<string> $sourceTableNames
+     * @param array<string> $joinClause
      *
      * @return string
      */
@@ -129,7 +129,7 @@ class SelectQuerySqlBuilder extends AbstractSqlQueryBuilder
             $sourceTableNames[] = '(' . $subQueryCriteria->createSelectSql($params) . ') AS ' . $subQueryAlias;
         }
 
-        if (empty($sourceTableNames) && $this->criteria->getPrimaryTableName()) {
+        if (!$sourceTableNames && $this->criteria->getPrimaryTableName()) {
             $primaryTable = $this->criteria->getPrimaryTableName();
             $sourceTableNames[] = $this->quoteIdentifierTable($primaryTable);
         }
@@ -150,7 +150,7 @@ class SelectQuerySqlBuilder extends AbstractSqlQueryBuilder
      *
      * @see \Propel\Runtime\ActiveQuery\ModelCriteria::addSelectQuery()
      *
-     * @param string[] $sourceTableNames
+     * @param array<string> $sourceTableNames
      *
      * @return void
      */
@@ -175,10 +175,10 @@ class SelectQuerySqlBuilder extends AbstractSqlQueryBuilder
      *  joins with a null join type will be added to the FROM clause and the condition added to the WHERE clause.
      *  joins of a specified type: the LEFT side will be added to the fromClause and the RIGHT to the joinClause
      *
-     * @param mixed[]|null $params
-     * @param string[] $sourceTableNamesCollector
+     * @param array<mixed>|null $params
+     * @param array<string> $sourceTableNamesCollector
      *
-     * @return string[]
+     * @return array<string>
      */
     protected function buildJoinClauses(?array &$params, array &$sourceTableNamesCollector): array
     {
@@ -198,13 +198,15 @@ class SelectQuerySqlBuilder extends AbstractSqlQueryBuilder
     }
 
     /**
-     * @return string[]
+     * @return array<string>
      */
     protected function getJoinTableNames(): array
     {
         $joinTables = [];
         foreach ($this->criteria->getJoins() as $join) {
-            $joinTables[] = $join->getRightTableWithAlias();
+            /** @var string $table */
+            $table = $join->getRightTableWithAlias();
+            $joinTables[] = $table;
         }
 
         return $joinTables;
@@ -213,8 +215,8 @@ class SelectQuerySqlBuilder extends AbstractSqlQueryBuilder
     /**
      * this will also add the table names to the FROM clause if they are not already included via a LEFT JOIN
      *
-     * @param mixed[]|null $params
-     * @param string[] $sourceTableNamesCollector
+     * @param array<mixed>|null $params
+     * @param array<string> $sourceTableNamesCollector
      *
      * @return string|null
      */
@@ -272,9 +274,9 @@ class SelectQuerySqlBuilder extends AbstractSqlQueryBuilder
     }
 
     /**
-     * @param mixed[] $params
+     * @param array<mixed> $params
      *
-     * @return string[]
+     * @return array<string>
      */
     protected function buildOrderByClause(array &$params): array
     {
@@ -342,7 +344,7 @@ class SelectQuerySqlBuilder extends AbstractSqlQueryBuilder
     }
 
     /**
-     * @param mixed[] $params
+     * @param array<mixed> $params
      *
      * @return string|null
      */

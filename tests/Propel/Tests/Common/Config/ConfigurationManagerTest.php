@@ -622,7 +622,7 @@ EOF;
     public function testGetConfigPropertyBadNameThrowsException()
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid configuration property name');
+        $this->expectExceptionMessage('Invalid empty configuration property name');
 
         $yamlConf = <<<EOF
 propel:
@@ -656,7 +656,7 @@ EOF;
         $this->newFile('propel.yaml', $yamlConf);
 
         $manager = new ConfigurationManager();
-        $manager->getConfigProperty(10);
+        $manager->getConfigProperty('');
     }
 
     /**
@@ -734,7 +734,7 @@ EOF;
             ],
         ];
 
-        $manager = new NotLoadingConfigurationManager($configs);
+        $manager = new NotLoadingConfigurationManager(null, $configs);
         $actual = $manager->GetSection('database')['connections'];
 
         $this->assertEquals($configs['propel']['database']['connections'], $actual);
@@ -745,7 +745,7 @@ EOF;
      */
     public function testProcessWrongParameter()
     {
-        $manager = new NotLoadingConfigurationManager(null);
+        $manager = new NotLoadingConfigurationManager(null, null);
 
         $this->assertEmpty($manager->get());
     }
@@ -863,16 +863,15 @@ EOF;
 
 class TestableConfigurationManager extends ConfigurationManager
 {
-    public function __construct($filename = 'propel', $extraConf = null)
+    protected function process(array $extraConf = []): void
     {
-        $this->load($filename, $extraConf);
     }
 }
 
 class NotLoadingConfigurationManager extends ConfigurationManager
 {
-    public function __construct($configs = null)
+    protected function loadConfig(string $path, array $extraConf = []): array
     {
-        $this->process($configs);
+        return $extraConf;
     }
 }

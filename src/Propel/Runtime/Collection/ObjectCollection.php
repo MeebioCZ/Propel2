@@ -8,9 +8,11 @@
 
 namespace Propel\Runtime\Collection;
 
+use Propel\Runtime\ActiveQuery\Criteria;
 use Propel\Runtime\ActiveQuery\PropelQuery;
 use Propel\Runtime\Collection\Exception\ReadOnlyModelException;
 use Propel\Runtime\Collection\Exception\UnsupportedRelationException;
+use Propel\Runtime\Connection\ConnectionInterface;
 use Propel\Runtime\Exception\RuntimeException;
 use Propel\Runtime\Map\RelationMap;
 use Propel\Runtime\Map\TableMap;
@@ -36,7 +38,7 @@ class ObjectCollection extends Collection
     /**
      * @param array $data
      */
-    public function __construct($data = [])
+    public function __construct(array $data = [])
     {
         parent::__construct($data);
         $this->rebuildIndex();
@@ -47,7 +49,7 @@ class ObjectCollection extends Collection
      *
      * @return void
      */
-    public function exchangeArray($input)
+    public function exchangeArray(array $input): void
     {
         $this->data = $input;
         $this->rebuildIndex();
@@ -58,7 +60,7 @@ class ObjectCollection extends Collection
      *
      * @return void
      */
-    public function setData($data)
+    public function setData(array $data): void
     {
         parent::setData($data);
         $this->rebuildIndex();
@@ -73,7 +75,7 @@ class ObjectCollection extends Collection
      *
      * @return void
      */
-    public function save($con = null)
+    public function save(?ConnectionInterface $con = null): void
     {
         if (!method_exists($this->getFullyQualifiedModel(), 'save')) {
             throw new ReadOnlyModelException('Cannot save objects on a read-only model');
@@ -81,7 +83,7 @@ class ObjectCollection extends Collection
         if ($con === null) {
             $con = $this->getWriteConnection();
         }
-        $con->transaction(function () use ($con) {
+        $con->transaction(function () use ($con): void {
             /** @var \Propel\Runtime\ActiveRecord\ActiveRecordInterface $element */
             foreach ($this as $element) {
                 $element->save($con);
@@ -98,7 +100,7 @@ class ObjectCollection extends Collection
      *
      * @return void
      */
-    public function delete($con = null)
+    public function delete(?ConnectionInterface $con = null): void
     {
         if (!method_exists($this->getFullyQualifiedModel(), 'delete')) {
             throw new ReadOnlyModelException('Cannot delete objects on a read-only model');
@@ -106,7 +108,7 @@ class ObjectCollection extends Collection
         if ($con === null) {
             $con = $this->getWriteConnection();
         }
-        $con->transaction(function () use ($con) {
+        $con->transaction(function () use ($con): void {
             /** @var \Propel\Runtime\ActiveRecord\ActiveRecordInterface $element */
             foreach ($this as $element) {
                 $element->delete($con);
@@ -121,7 +123,7 @@ class ObjectCollection extends Collection
      *
      * @return array The list of the primary keys of the collection
      */
-    public function getPrimaryKeys($usePrefix = true)
+    public function getPrimaryKeys(bool $usePrefix = true): array
     {
         $ret = [];
 
@@ -143,7 +145,7 @@ class ObjectCollection extends Collection
      *
      * @return void
      */
-    public function fromArray($arr)
+    public function fromArray(array $arr): void
     {
         $class = $this->getFullyQualifiedModel();
         foreach ($arr as $element) {
@@ -189,12 +191,12 @@ class ObjectCollection extends Collection
      * @return array
      */
     public function toArray(
-        $keyColumn = null,
-        $usePrefix = false,
-        $keyType = TableMap::TYPE_PHPNAME,
-        $includeLazyLoadColumns = true,
-        $alreadyDumpedObjects = []
-    ) {
+        ?string $keyColumn = null,
+        bool $usePrefix = false,
+        string $keyType = TableMap::TYPE_PHPNAME,
+        bool $includeLazyLoadColumns = true,
+        array $alreadyDumpedObjects = []
+    ): array {
         $ret = [];
         $keyGetterMethod = 'get' . $keyColumn;
 
@@ -235,7 +237,7 @@ class ObjectCollection extends Collection
      *
      * @return array
      */
-    public function getArrayCopy($keyColumn = null, $usePrefix = false)
+    public function getArrayCopy(?string $keyColumn = null, bool $usePrefix = false): array
     {
         if ($keyColumn === null && $usePrefix === false) {
             return parent::getArrayCopy();
@@ -265,7 +267,7 @@ class ObjectCollection extends Collection
      *
      * @return array
      */
-    public function toKeyValue($keyColumn = 'PrimaryKey', $valueColumn = null)
+    public function toKeyValue(string $keyColumn = 'PrimaryKey', ?string $valueColumn = null): array
     {
         $ret = [];
         $keyGetterMethod = 'get' . $keyColumn;
@@ -284,18 +286,18 @@ class ObjectCollection extends Collection
      * <code>
      *   $res = $userCollection->toKeyIndex('Name');
      *
-     *   $res = array(
+     *   $res = [
      *       'peter' => class User #1 {$name => 'peter', ...},
      *       'hans' => class User #2 {$name => 'hans', ...},
      *       ...
-     *   )
+     *   ]
      * </code>
      *
      * @param string $keyColumn
      *
      * @return array
      */
-    public function toKeyIndex($keyColumn = 'PrimaryKey')
+    public function toKeyIndex(string $keyColumn = 'PrimaryKey'): array
     {
         $ret = [];
         $keyGetterMethod = 'get' . ucfirst($keyColumn);
@@ -312,18 +314,18 @@ class ObjectCollection extends Collection
      * <code>
      *   $res = $userCollection->toKeyIndex('Name');
      *
-     *   $res = array(
+     *   $res = [
      *       'peter',
      *       'hans',
      *       ...
-     *   )
+     *   ]
      * </code>
      *
      * @param string $columnName
      *
      * @return array
      */
-    public function getColumnValues($columnName = 'PrimaryKey')
+    public function getColumnValues(string $columnName = 'PrimaryKey'): array
     {
         $ret = [];
         $keyGetterMethod = 'get' . ucfirst($columnName);
@@ -345,10 +347,13 @@ class ObjectCollection extends Collection
      * @throws \Propel\Runtime\Exception\RuntimeException
      * @throws \Propel\Runtime\Collection\Exception\UnsupportedRelationException
      *
-     * @return \Propel\Runtime\Collection\ObjectCollection The list of related objects
+     * @return static The list of related objects.
      */
-    public function populateRelation($relation, $criteria = null, $con = null)
-    {
+    public function populateRelation(
+        string $relation,
+        ?Criteria $criteria = null,
+        ?ConnectionInterface $con = null
+    ) {
         if (!Propel::isInstancePoolingEnabled()) {
             throw new RuntimeException(__METHOD__ . ' needs instance pooling to be enabled prior to populating the collection');
         }
@@ -358,12 +363,14 @@ class ObjectCollection extends Collection
             $relationClassName = $relationMap->getRightTable()->getClassName();
             $collectionClassName = $relationMap->getRightTable()->getCollectionClassName();
 
+            /** @var static $coll */
             $coll = new $collectionClassName();
             $coll->setModel($relationClassName);
             $coll->setFormatter($this->getFormatter());
 
             return $coll;
         }
+
         $symRelationMap = $relationMap->getSymmetricalRelation();
 
         $query = PropelQuery::from($relationMap->getRightTable()->getClassName());
@@ -372,6 +379,7 @@ class ObjectCollection extends Collection
         }
         // query the db for the related objects
         $filterMethod = 'filterBy' . $symRelationMap->getName();
+        /** @var static $relatedObjects */
         $relatedObjects = $query
             ->$filterMethod($this)
             ->find($con);
@@ -388,7 +396,7 @@ class ObjectCollection extends Collection
             $getMethod = 'get' . $symRelationMap->getName();
             $addMethod = 'add' . $relationName;
             foreach ($relatedObjects as $object) {
-                $mainObj = $object->$getMethod();  // instance pool is used here to avoid a query
+                $mainObj = $object->$getMethod(); // instance pool is used here to avoid a query
                 $mainObj->$addMethod($object);
             }
         } elseif ($relationMap->getType() === RelationMap::MANY_TO_ONE) {
@@ -421,7 +429,7 @@ class ObjectCollection extends Collection
     /**
      * @return void
      */
-    protected function rebuildIndex()
+    protected function rebuildIndex(): void
     {
         $this->index = [];
         $this->indexSplHash = [];
@@ -437,7 +445,7 @@ class ObjectCollection extends Collection
      *
      * @return void
      */
-    public function offsetUnset($offset)
+    public function offsetUnset($offset): void
     {
         if (isset($this->data[$offset])) {
             if (is_object($this->data[$offset])) {
@@ -453,7 +461,7 @@ class ObjectCollection extends Collection
      *
      * @return void
      */
-    public function removeObject($element)
+    public function removeObject($element): void
     {
         if (($pos = $this->search($element)) !== false) {
             $this->remove($pos);
@@ -465,7 +473,7 @@ class ObjectCollection extends Collection
      *
      * @return void
      */
-    public function append($value)
+    public function append($value): void
     {
         if (!is_object($value)) {
             parent::append($value);
@@ -488,7 +496,7 @@ class ObjectCollection extends Collection
      *
      * @return void
      */
-    public function offsetSet($offset, $value)
+    public function offsetSet($offset, $value): void
     {
         if (!is_object($value)) {
             parent::offsetSet($offset, $value);
@@ -520,7 +528,7 @@ class ObjectCollection extends Collection
     /**
      * @inheritDoc
      */
-    public function contains($element)
+    public function contains($element): bool
     {
         if (!is_object($element)) {
             return parent::contains($element);
@@ -536,7 +544,7 @@ class ObjectCollection extends Collection
      *
      * @return string
      */
-    protected function getHashCode($object)
+    protected function getHashCode($object): string
     {
         if (is_object($object) && is_callable([$object, 'hashCode'])) {
             return $object->hashCode();

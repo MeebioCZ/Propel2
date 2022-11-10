@@ -15,9 +15,24 @@ namespace Propel\Generator\Model;
  */
 interface MappingModelInterface
 {
+    /**
+     * @var string
+     */
     public const DEFAULT_STRING_FORMAT = 'YAML';
+
+    /**
+     * @var string
+     */
     public const VISIBILITY_PUBLIC = 'public';
+
+    /**
+     * @var string
+     */
     public const VISIBILITY_PRIVATE = 'private';
+
+    /**
+     * @var string
+     */
     public const VISIBILITY_PROTECTED = 'protected';
 
     /**
@@ -27,5 +42,5 @@ interface MappingModelInterface
      *
      * @return void
      */
-    public function loadMapping(array $attributes);
+    public function loadMapping(array $attributes): void;
 }

@@ -11,7 +11,6 @@ namespace Propel\Runtime\Formatter;
 use Propel\Runtime\ActiveRecord\ActiveRecordInterface;
 use Propel\Runtime\DataFetcher\DataFetcherInterface;
 use Propel\Runtime\Exception\LogicException;
-use ReflectionClass;
 
 /**
  * Array formatter for Propel query
@@ -19,24 +18,14 @@ use ReflectionClass;
  *
  * @author Francois Zaninotto
  */
-class ArrayFormatter extends AbstractFormatter
+class ArrayFormatter extends AbstractFormatterWithHydration
 {
-    /**
-     * @var array
-     */
-    protected $alreadyHydratedObjects = [];
-
-    /**
-     * @var mixed
-     */
-    protected $emptyVariable;
-
     /**
      * @param \Propel\Runtime\DataFetcher\DataFetcherInterface|null $dataFetcher
      *
      * @throws \Propel\Runtime\Exception\LogicException
      *
-     * @return array|\Propel\Runtime\Collection\Collection
+     * @return \Propel\Runtime\Collection\Collection|array
      */
     public function format(?DataFetcherInterface $dataFetcher = null)
     {
@@ -76,7 +65,7 @@ class ArrayFormatter extends AbstractFormatter
     /**
      * @return string|null
      */
-    public function getCollectionClassName()
+    public function getCollectionClassName(): ?string
     {
         return '\Propel\Runtime\Collection\ArrayCollection';
     }
@@ -88,7 +77,7 @@ class ArrayFormatter extends AbstractFormatter
      *
      * @return array|null
      */
-    public function formatOne(?DataFetcherInterface $dataFetcher = null)
+    public function formatOne(?DataFetcherInterface $dataFetcher = null): ?array
     {
         $this->checkInit();
         $result = null;
@@ -123,7 +112,7 @@ class ArrayFormatter extends AbstractFormatter
      *
      * @return array The original record turned into an array
      */
-    public function formatRecord(?ActiveRecordInterface $record = null)
+    public function formatRecord(?ActiveRecordInterface $record = null): array
     {
         return $record ? $record->toArray() : [];
     }
@@ -131,7 +120,7 @@ class ArrayFormatter extends AbstractFormatter
     /**
      * @return bool
      */
-    public function isObjectFormatter()
+    public function isObjectFormatter(): bool
     {
         return false;
     }
@@ -146,92 +135,10 @@ class ArrayFormatter extends AbstractFormatter
      *
      * @return array
      */
-    public function &getStructuredArrayFromRow($row)
+    public function &getStructuredArrayFromRow(array $row): array
     {
-        $col = 0;
+        $result = &$this->hydratePropelObjectCollection($row);
 
-        // hydrate main object or take it from registry
-        $mainObjectIsNew = false;
-        $this->checkInit();
-        /** @var \Propel\Runtime\Map\TableMap $tableMap */
-        $tableMap = $this->tableMap;
-        $indexType = $this->getDataFetcher()->getIndexType();
-        $mainKey = $tableMap::getPrimaryKeyHashFromRow($row, 0, $indexType);
-        // we hydrate the main object even in case of a one-to-many relationship
-        // in order to get the $col variable increased anyway
-        $obj = $this->getSingleObjectFromRow($row, $this->class, $col);
-
-        if (!isset($this->alreadyHydratedObjects[$this->class][$mainKey])) {
-            $this->alreadyHydratedObjects[$this->class][$mainKey] = $obj->toArray();
-            $mainObjectIsNew = true;
-        }
-
-        $hydrationChain = [];
-
-        // related objects added using with()
-        foreach ($this->getWith() as $relAlias => $modelWith) {
-            // determine class to use
-            if ($modelWith->isSingleTableInheritance()) {
-                $class = $modelWith->getTableMap()::getOMClass($row, $col, false);
-                $refl = new ReflectionClass($class);
-                if ($refl->isAbstract()) {
-                    $tableMapClass = "Map\\{$class}TableMap";
-                    $col += $tableMapClass::NUM_COLUMNS;
-
-                    continue;
-                }
-            } else {
-                $class = $modelWith->getModelName();
-            }
-
-            // hydrate related object or take it from registry
-            $key = $modelWith->getTableMap()::getPrimaryKeyHashFromRow($row, $col, $indexType);
-            // we hydrate the main object even in case of a one-to-many relationship
-            // in order to get the $col variable increased anyway
-            $secondaryObject = $this->getSingleObjectFromRow($row, $class, $col);
-            if (!isset($this->alreadyHydratedObjects[$relAlias][$key])) {
-                if ($secondaryObject->isPrimaryKeyNull()) {
-                    $this->alreadyHydratedObjects[$relAlias][$key] = [];
-                } else {
-                    $this->alreadyHydratedObjects[$relAlias][$key] = $secondaryObject->toArray();
-                }
-            }
-
-            if ($modelWith->isPrimary()) {
-                $arrayToAugment = &$this->alreadyHydratedObjects[$this->class][$mainKey];
-            } else {
-                $arrayToAugment = &$hydrationChain[$modelWith->getLeftPhpName()];
-            }
-
-            if ($modelWith->isAdd()) {
-                if (
-                    !isset($arrayToAugment[$modelWith->getRelationName()]) ||
-                    !in_array(
-                        $this->alreadyHydratedObjects[$relAlias][$key],
-                        $arrayToAugment[$modelWith->getRelationName()],
-                        true
-                    )
-                ) {
-                    $arrayToAugment[$modelWith->getRelationName()][] = &$this->alreadyHydratedObjects[$relAlias][$key];
-                }
-            } else {
-                $arrayToAugment[$modelWith->getRelationName()] = &$this->alreadyHydratedObjects[$relAlias][$key];
-            }
-
-            $hydrationChain[$modelWith->getRightPhpName()] = &$this->alreadyHydratedObjects[$relAlias][$key];
-        }
-
-        // columns added using withColumn()
-        foreach ($this->getAsColumns() as $alias => $clause) {
-            $this->alreadyHydratedObjects[$this->class][$mainKey][$alias] = $row[$col];
-            $col++;
-        }
-
-        if ($mainObjectIsNew) {
-            return $this->alreadyHydratedObjects[$this->class][$mainKey];
-        }
-
-        // we still need to return a reference to something to avoid a warning
-        return $this->emptyVariable;
+        return $result;
     }
 }

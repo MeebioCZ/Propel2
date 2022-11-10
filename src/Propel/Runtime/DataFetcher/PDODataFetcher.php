@@ -51,7 +51,7 @@ class PDODataFetcher extends AbstractDataFetcher
      *
      * @return int
      */
-    public function setStyle($style)
+    public function setStyle(int $style): int
     {
         $old_style = $this->style;
         $this->style = $style;
@@ -64,7 +64,7 @@ class PDODataFetcher extends AbstractDataFetcher
      *
      * @return int
      */
-    public function getStyle()
+    public function getStyle(): int
     {
         return $this->style;
     }
@@ -72,39 +72,45 @@ class PDODataFetcher extends AbstractDataFetcher
     /**
      * @param int|null $style
      *
-     * @return array|null
+     * @return array|bool|null
      */
-    public function fetch($style = null)
+    public function fetch(?int $style = null)
     {
         if ($style === null) {
             $style = $this->style;
         }
 
-        return $this->getDataObject()->fetch($style);
+        /** @var \Propel\Runtime\Connection\StatementInterface $dataObject */
+        $dataObject = $this->getDataObject();
+
+        return $dataObject->fetch($style);
     }
 
     /**
      * @see \PDOStatement::fetchAll()
      *
      * @param int|null $style
-     * @param int|string|object|null $fetch_argument
-     * @param array|null $ctor_args
+     * @param object|string|int|null $fetch_argument
+     * @param array $ctor_args
      *
      * @return array
      */
-    public function fetchAll(?int $style = null, $fetch_argument = null, ?array $ctor_args = null): array
+    public function fetchAll(?int $style = null, $fetch_argument = null, array $ctor_args = []): array
     {
         if ($style === null) {
             $style = $this->style;
         }
 
-        return $this->getDataObject()->fetchAll($style, $fetch_argument, $ctor_args);
+        /** @var \Propel\Runtime\Connection\StatementInterface $dataObject */
+        $dataObject = $this->getDataObject();
+
+        return $dataObject->fetchAll($style, $fetch_argument, $ctor_args);
     }
 
     /**
      * @return void
      */
-    public function next()
+    public function next(): void
     {
         if ($this->dataObject !== null) {
             $this->current = $this->dataObject->fetch($this->style);
@@ -115,16 +121,22 @@ class PDODataFetcher extends AbstractDataFetcher
     }
 
     /**
+     * @psalm-suppress ReservedWord
+     *
      * @inheritDoc
      */
+    #[\ReturnTypeWillChange]
     public function current()
     {
         return $this->current;
     }
 
     /**
+     * @psalm-suppress ReservedWord
+     *
      * @inheritDoc
      */
+    #[\ReturnTypeWillChange]
     public function key()
     {
         return $this->index;
@@ -133,7 +145,7 @@ class PDODataFetcher extends AbstractDataFetcher
     /**
      * @inheritDoc
      */
-    public function valid()
+    public function valid(): bool
     {
         return $this->current !== null && $this->current !== false;
     }
@@ -145,7 +157,7 @@ class PDODataFetcher extends AbstractDataFetcher
      *
      * @return void
      */
-    public function rewind()
+    public function rewind(): void
     {
         if ($this->dataObject) {
             $this->current = $this->dataObject->fetch($this->style);
@@ -155,9 +167,11 @@ class PDODataFetcher extends AbstractDataFetcher
     /**
      * @return void
      */
-    public function close()
+    public function close(): void
     {
-        $this->getDataObject()->closeCursor();
+        /** @var \Propel\Runtime\Connection\StatementInterface $dataObject */
+        $dataObject = $this->getDataObject();
+        $dataObject->closeCursor();
         $this->setDataObject(null); //so the connection can be garbage collected
         $this->current = null;
         $this->index = -1;
@@ -166,7 +180,7 @@ class PDODataFetcher extends AbstractDataFetcher
     /**
      * @inheritDoc
      */
-    public function count()
+    public function count(): int
     {
         if ($this->dataObject && $this->dataObject->getConnection()->getAttribute(PDO::ATTR_DRIVER_NAME) === 'sqlite') {
             $lastQuery = $this->dataObject->getStatement()->queryString;
@@ -191,7 +205,7 @@ class PDODataFetcher extends AbstractDataFetcher
     /**
      * @inheritDoc
      */
-    public function getIndexType()
+    public function getIndexType(): string
     {
         return TableMap::TYPE_NUM;
     }
@@ -209,7 +223,7 @@ class PDODataFetcher extends AbstractDataFetcher
      *
      * @return void
      */
-    public function bindColumn($column, &$param, $type = null, $maxlen = null, $driverdata = null)
+    public function bindColumn($column, &$param, ?int $type = null, ?int $maxlen = null, $driverdata = null): void
     {
         if ($this->dataObject) {
             $this->dataObject->bindColumn($column, $param, $type, $maxlen, $driverdata);

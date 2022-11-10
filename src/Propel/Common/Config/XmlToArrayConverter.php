@@ -27,12 +27,8 @@ class XmlToArrayConverter
      *
      * @return array
      */
-    public static function convert($xmlToParse)
+    public static function convert(string $xmlToParse): array
     {
-        if (!is_string($xmlToParse)) {
-            throw new InvalidArgumentException('XmlToArrayConverter::convert method expects an xml file to parse, or a string containing valid xml');
-        }
-
         $isFile = file_exists($xmlToParse);
 
         if ($isFile) {
@@ -70,7 +66,7 @@ class XmlToArrayConverter
             throw new XmlParseException($errors);
         }
 
-        return self::simpleXmlToArray($xml);
+        return static::simpleXmlToArray($xml);
     }
 
     /**
@@ -82,15 +78,15 @@ class XmlToArrayConverter
      *
      * @return array Array representation of SimpleXML object.
      */
-    protected static function simpleXmlToArray($xml)
+    protected static function simpleXmlToArray(SimpleXMLElement $xml): array
     {
         $ar = [];
         foreach ($xml->children() as $k => $v) {
             // recurse the child
-            $child = self::simpleXmlToArray($v);
+            $child = static::simpleXmlToArray($v);
 
             // if it's not an array, then it was empty, thus a value/string
-            if (count($child) == 0) {
+            if ($child === []) {
                 $child = self::getConvertedXmlValue($v);
             }
 
@@ -114,7 +110,7 @@ class XmlToArrayConverter
 
             // if the $k is already in our children list, we need to transform
             // it into an array, else we add it as a value
-            if (!in_array($k, array_keys($ar))) {
+            if (!array_key_exists($k, $ar)) {
                 $ar[$k] = $child;
             } else {
                 // (This only applies to nested nodes that do not have an @id attribute)
@@ -139,9 +135,9 @@ class XmlToArrayConverter
      *
      * @param \SimpleXMLElement $valueElement The simplexml value object.
      *
-     * @return bool|float|int|string string or boolean value
+     * @return string|float|int|bool string or boolean value
      */
-    private static function getConvertedXmlValue(SimpleXMLElement $valueElement)
+    protected static function getConvertedXmlValue(SimpleXMLElement $valueElement)
     {
         $value = (string)$valueElement; // convert from simplexml to string
 

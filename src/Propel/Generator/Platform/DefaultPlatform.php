@@ -36,7 +36,7 @@ class DefaultPlatform implements PlatformInterface
     /**
      * Mapping from Propel types to Domain objects.
      *
-     * @var \Propel\Generator\Model\Domain[]
+     * @var array<\Propel\Generator\Model\Domain>
      */
     protected $schemaDomainMap;
 
@@ -71,7 +71,7 @@ class DefaultPlatform implements PlatformInterface
      *
      * @return string
      */
-    public function getObjectBuilderClass($type)
+    public function getObjectBuilderClass(string $type): string
     {
         return '';
     }
@@ -83,7 +83,7 @@ class DefaultPlatform implements PlatformInterface
      *
      * @return void
      */
-    public function setConnection(?ConnectionInterface $con = null)
+    public function setConnection(?ConnectionInterface $con = null): void
     {
         $this->con = $con;
     }
@@ -91,9 +91,9 @@ class DefaultPlatform implements PlatformInterface
     /**
      * Returns the database connection to use for this Platform class.
      *
-     * @return \Propel\Runtime\Connection\ConnectionInterface
+     * @return \Propel\Runtime\Connection\ConnectionInterface|null
      */
-    public function getConnection()
+    public function getConnection(): ?ConnectionInterface
     {
         return $this->con;
     }
@@ -101,7 +101,7 @@ class DefaultPlatform implements PlatformInterface
     /**
      * @return bool
      */
-    public function isIdentifierQuotingEnabled()
+    public function isIdentifierQuotingEnabled(): bool
     {
         return $this->identifierQuoting;
     }
@@ -111,7 +111,7 @@ class DefaultPlatform implements PlatformInterface
      *
      * @return void
      */
-    public function setIdentifierQuoting($enabled)
+    public function setIdentifierQuoting(bool $enabled): void
     {
         $this->identifierQuoting = $enabled;
     }
@@ -123,7 +123,7 @@ class DefaultPlatform implements PlatformInterface
      *
      * @return void
      */
-    public function setGeneratorConfig(GeneratorConfigInterface $generatorConfig)
+    public function setGeneratorConfig(GeneratorConfigInterface $generatorConfig): void
     {
     }
 
@@ -132,7 +132,7 @@ class DefaultPlatform implements PlatformInterface
      *
      * @return void
      */
-    protected function initialize()
+    protected function initialize(): void
     {
         $this->schemaDomainMap = [];
         foreach (PropelTypes::getPropelTypes() as $type) {
@@ -153,7 +153,7 @@ class DefaultPlatform implements PlatformInterface
      *
      * @return void
      */
-    protected function setSchemaDomainMapping(Domain $domain)
+    protected function setSchemaDomainMapping(Domain $domain): void
     {
         $this->schemaDomainMap[$domain->getType()] = $domain;
     }
@@ -164,7 +164,7 @@ class DefaultPlatform implements PlatformInterface
      *
      * @return string
      */
-    public function getDatabaseType()
+    public function getDatabaseType(): string
     {
         $reflClass = new ReflectionClass($this);
         $clazz = $reflClass->getShortName();
@@ -178,15 +178,17 @@ class DefaultPlatform implements PlatformInterface
      *
      * @return int The max column length
      */
-    public function getMaxColumnNameLength()
+    public function getMaxColumnNameLength(): int
     {
         return 64;
     }
 
     /**
+     * @phpstan-return non-empty-string
+     *
      * @return string
      */
-    public function getSchemaDelimiter()
+    public function getSchemaDelimiter(): string
     {
         return '.';
     }
@@ -196,7 +198,7 @@ class DefaultPlatform implements PlatformInterface
      *
      * @return string The native IdMethod (PlatformInterface:IDENTITY, PlatformInterface::SEQUENCE).
      */
-    public function getNativeIdMethod()
+    public function getNativeIdMethod(): string
     {
         return PlatformInterface::IDENTITY;
     }
@@ -204,7 +206,7 @@ class DefaultPlatform implements PlatformInterface
     /**
      * @return bool
      */
-    public function isNativeIdMethodAutoIncrement()
+    public function isNativeIdMethodAutoIncrement(): bool
     {
         return $this->getNativeIdMethod() === PlatformInterface::IDENTITY;
     }
@@ -212,19 +214,19 @@ class DefaultPlatform implements PlatformInterface
     /**
      * Returns the database specific domain for a mapping type.
      *
-     * @param string $mappingType
+     * @param string $propelType
      *
      * @throws \Propel\Generator\Exception\EngineException
      *
      * @return \Propel\Generator\Model\Domain
      */
-    public function getDomainForType($mappingType)
+    public function getDomainForType(string $propelType): Domain
     {
-        if (!isset($this->schemaDomainMap[$mappingType])) {
-            throw new EngineException(sprintf('Cannot map unknown Propel type %s to native database type.', var_export($mappingType, true)));
+        if (!isset($this->schemaDomainMap[$propelType])) {
+            throw new EngineException(sprintf('Cannot map unknown Propel type %s to native database type.', var_export($propelType, true)));
         }
 
-        return $this->schemaDomainMap[$mappingType];
+        return $this->schemaDomainMap[$propelType];
     }
 
     /**
@@ -234,7 +236,7 @@ class DefaultPlatform implements PlatformInterface
      *
      * @return string
      */
-    public function getNullString($notNull)
+    public function getNullString(bool $notNull): string
     {
         return $notNull ? 'NOT NULL' : '';
     }
@@ -244,7 +246,7 @@ class DefaultPlatform implements PlatformInterface
      *
      * @return string
      */
-    public function getAutoIncrement()
+    public function getAutoIncrement(): string
     {
         return 'IDENTITY';
     }
@@ -257,16 +259,16 @@ class DefaultPlatform implements PlatformInterface
      *
      * @param \Propel\Generator\Model\Table $table
      *
-     * @return string
+     * @return string|null
      */
-    public function getSequenceName(Table $table)
+    public function getSequenceName(Table $table): ?string
     {
         static $longNamesMap = [];
         $result = null;
         if ($table->getIdMethod() === IdMethod::NATIVE) {
             $idMethodParams = $table->getIdMethodParameters();
             $maxIdentifierLength = $this->getMaxColumnNameLength();
-            if (empty($idMethodParams)) {
+            if (!$idMethodParams) {
                 if (strlen($table->getName() . '_SEQ') > $maxIdentifierLength) {
                     if (!isset($longNamesMap[$table->getName()])) {
                         $longNamesMap[$table->getName()] = (string)(count($longNamesMap) + 1);
@@ -276,7 +278,7 @@ class DefaultPlatform implements PlatformInterface
                     $result = substr($table->getName(), 0, $maxIdentifierLength - 4) . '_SEQ';
                 }
             } else {
-                $result = substr($idMethodParams[0]->getValue(), 0, $maxIdentifierLength);
+                $result = (string)substr($idMethodParams[0]->getValue(), 0, $maxIdentifierLength);
             }
         }
 
@@ -291,7 +293,7 @@ class DefaultPlatform implements PlatformInterface
      *
      * @return string
      */
-    public function getAddTablesDDL(Database $database)
+    public function getAddTablesDDL(Database $database): string
     {
         $ret = $this->getBeginDDL();
         foreach ($database->getTablesForSql() as $table) {
@@ -314,7 +316,7 @@ class DefaultPlatform implements PlatformInterface
      *
      * @return string
      */
-    public function getBeginDDL()
+    public function getBeginDDL(): string
     {
         return '';
     }
@@ -324,7 +326,7 @@ class DefaultPlatform implements PlatformInterface
      *
      * @return string
      */
-    public function getEndDDL()
+    public function getEndDDL(): string
     {
         return '';
     }
@@ -336,7 +338,7 @@ class DefaultPlatform implements PlatformInterface
      *
      * @return string
      */
-    public function getDropTableDDL(Table $table)
+    public function getDropTableDDL(Table $table): string
     {
         return "
 DROP TABLE IF EXISTS " . $this->quoteIdentifier($table->getName()) . ";
@@ -351,7 +353,7 @@ DROP TABLE IF EXISTS " . $this->quoteIdentifier($table->getName()) . ";
      *
      * @return string
      */
-    public function getAddTableDDL(Table $table)
+    public function getAddTableDDL(Table $table): string
     {
         $tableDescription = $table->hasDescription() ? $this->getCommentLineDDL($table->getDescription()) : '';
 
@@ -383,7 +385,7 @@ DROP TABLE IF EXISTS " . $this->quoteIdentifier($table->getName()) . ";
             $pattern,
             $tableDescription,
             $this->quoteIdentifier($table->getName()),
-            implode($sep, $lines)
+            implode($sep, $lines),
         );
     }
 
@@ -394,7 +396,7 @@ DROP TABLE IF EXISTS " . $this->quoteIdentifier($table->getName()) . ";
      *
      * @return string
      */
-    public function getColumnDDL(Column $col)
+    public function getColumnDDL(Column $col): string
     {
         $domain = $col->getDomain();
 
@@ -425,7 +427,7 @@ DROP TABLE IF EXISTS " . $this->quoteIdentifier($table->getName()) . ";
      *
      * @return string
      */
-    public function getColumnDefaultValueDDL(Column $col)
+    public function getColumnDefaultValueDDL(Column $col): string
     {
         $default = '';
         $defaultValue = $col->getDefaultValue();
@@ -477,7 +479,7 @@ DROP TABLE IF EXISTS " . $this->quoteIdentifier($table->getName()) . ";
      *
      * @return string
      */
-    public function getColumnListDDL($columns, $delimiter = ',')
+    public function getColumnListDDL($columns, $delimiter = ','): string
     {
         $list = [];
         foreach ($columns as $column) {
@@ -495,7 +497,7 @@ DROP TABLE IF EXISTS " . $this->quoteIdentifier($table->getName()) . ";
      *
      * @return string
      */
-    public function getPrimaryKeyName(Table $table)
+    public function getPrimaryKeyName(Table $table): string
     {
         $tableName = $table->getCommonName();
 
@@ -509,7 +511,7 @@ DROP TABLE IF EXISTS " . $this->quoteIdentifier($table->getName()) . ";
      *
      * @return string
      */
-    public function getPrimaryKeyDDL(Table $table)
+    public function getPrimaryKeyDDL(Table $table): string
     {
         if ($table->hasPrimaryKey()) {
             return 'PRIMARY KEY (' . $this->getColumnListDDL($table->getPrimaryKey()) . ')';
@@ -525,7 +527,7 @@ DROP TABLE IF EXISTS " . $this->quoteIdentifier($table->getName()) . ";
      *
      * @return string
      */
-    public function getDropPrimaryKeyDDL(Table $table)
+    public function getDropPrimaryKeyDDL(Table $table): string
     {
         if (!$table->hasPrimaryKey()) {
             return '';
@@ -538,7 +540,7 @@ ALTER TABLE %s DROP CONSTRAINT %s;
         return sprintf(
             $pattern,
             $this->quoteIdentifier($table->getName()),
-            $this->quoteIdentifier($this->getPrimaryKeyName($table))
+            $this->quoteIdentifier($this->getPrimaryKeyName($table)),
         );
     }
 
@@ -549,7 +551,7 @@ ALTER TABLE %s DROP CONSTRAINT %s;
      *
      * @return string
      */
-    public function getAddPrimaryKeyDDL(Table $table)
+    public function getAddPrimaryKeyDDL(Table $table): string
     {
         if (!$table->hasPrimaryKey()) {
             return '';
@@ -562,7 +564,7 @@ ALTER TABLE %s ADD %s;
         return sprintf(
             $pattern,
             $this->quoteIdentifier($table->getName()),
-            $this->getPrimaryKeyDDL($table)
+            $this->getPrimaryKeyDDL($table),
         );
     }
 
@@ -573,7 +575,7 @@ ALTER TABLE %s ADD %s;
      *
      * @return string
      */
-    public function getAddIndicesDDL(Table $table)
+    public function getAddIndicesDDL(Table $table): string
     {
         $ret = '';
         foreach ($table->getIndices() as $fk) {
@@ -590,7 +592,7 @@ ALTER TABLE %s ADD %s;
      *
      * @return string
      */
-    public function getAddIndexDDL(Index $index)
+    public function getAddIndexDDL(Index $index): string
     {
         $pattern = "
 CREATE %sINDEX %s ON %s (%s);
@@ -601,7 +603,7 @@ CREATE %sINDEX %s ON %s (%s);
             $index->isUnique() ? 'UNIQUE ' : '',
             $this->quoteIdentifier($index->getName()),
             $this->quoteIdentifier($index->getTable()->getName()),
-            $this->getColumnListDDL($index->getColumnObjects())
+            $this->getColumnListDDL($index->getColumnObjects()),
         );
     }
 
@@ -612,7 +614,7 @@ CREATE %sINDEX %s ON %s (%s);
      *
      * @return string
      */
-    public function getDropIndexDDL(Index $index)
+    public function getDropIndexDDL(Index $index): string
     {
         $pattern = "
 DROP INDEX %s;
@@ -620,7 +622,7 @@ DROP INDEX %s;
 
         return sprintf(
             $pattern,
-            $this->quoteIdentifier($index->getFQName())
+            $this->quoteIdentifier($index->getFQName()),
         );
     }
 
@@ -631,13 +633,13 @@ DROP INDEX %s;
      *
      * @return string
      */
-    public function getIndexDDL(Index $index)
+    public function getIndexDDL(Index $index): string
     {
         return sprintf(
             '%sINDEX %s (%s)',
             $index->isUnique() ? 'UNIQUE ' : '',
             $this->quoteIdentifier($index->getName()),
-            $this->getColumnListDDL($index->getColumnObjects())
+            $this->getColumnListDDL($index->getColumnObjects()),
         );
     }
 
@@ -648,7 +650,7 @@ DROP INDEX %s;
      *
      * @return string
      */
-    public function getUniqueDDL(Unique $unique)
+    public function getUniqueDDL(Unique $unique): string
     {
         return sprintf('UNIQUE (%s)', $this->getColumnListDDL($unique->getColumnObjects()));
     }
@@ -660,7 +662,7 @@ DROP INDEX %s;
      *
      * @return string
      */
-    public function getAddForeignKeysDDL(Table $table)
+    public function getAddForeignKeysDDL(Table $table): string
     {
         $ret = '';
         foreach ($table->getForeignKeys() as $fk) {
@@ -677,7 +679,7 @@ DROP INDEX %s;
      *
      * @return string
      */
-    public function getAddForeignKeyDDL(ForeignKey $fk)
+    public function getAddForeignKeyDDL(ForeignKey $fk): string
     {
         if ($fk->isSkipSql() || $fk->isPolymorphic()) {
             return '';
@@ -689,7 +691,7 @@ ALTER TABLE %s ADD %s;
         return sprintf(
             $pattern,
             $this->quoteIdentifier($fk->getTable()->getName()),
-            $this->getForeignKeyDDL($fk)
+            $this->getForeignKeyDDL($fk),
         );
     }
 
@@ -700,7 +702,7 @@ ALTER TABLE %s ADD %s;
      *
      * @return string|null
      */
-    public function getDropForeignKeyDDL(ForeignKey $fk)
+    public function getDropForeignKeyDDL(ForeignKey $fk): ?string
     {
         if ($fk->isSkipSql() || $fk->isPolymorphic()) {
             return null;
@@ -712,7 +714,7 @@ ALTER TABLE %s DROP CONSTRAINT %s;
         return sprintf(
             $pattern,
             $this->quoteIdentifier($fk->getTable()->getName()),
-            $this->quoteIdentifier($fk->getName())
+            $this->quoteIdentifier($fk->getName()),
         );
     }
 
@@ -723,7 +725,7 @@ ALTER TABLE %s DROP CONSTRAINT %s;
      *
      * @return string
      */
-    public function getForeignKeyDDL(ForeignKey $fk)
+    public function getForeignKeyDDL(ForeignKey $fk): string
     {
         if ($fk->isSkipSql() || $fk->isPolymorphic()) {
             return '';
@@ -737,7 +739,7 @@ ALTER TABLE %s DROP CONSTRAINT %s;
             $this->quoteIdentifier($fk->getName()),
             $this->getColumnListDDL($fk->getLocalColumnObjects()),
             $this->quoteIdentifier($fk->getForeignTableName()),
-            $this->getColumnListDDL($fk->getForeignColumnObjects())
+            $this->getColumnListDDL($fk->getForeignColumnObjects()),
         );
         if ($fk->hasOnUpdate()) {
             $script .= "
@@ -756,7 +758,7 @@ ALTER TABLE %s DROP CONSTRAINT %s;
      *
      * @return string
      */
-    public function getCommentLineDDL($comment)
+    public function getCommentLineDDL(string $comment): string
     {
         $pattern = "-- %s
 ";
@@ -769,7 +771,7 @@ ALTER TABLE %s DROP CONSTRAINT %s;
      *
      * @return string
      */
-    public function getCommentBlockDDL($comment)
+    public function getCommentBlockDDL(string $comment): string
     {
         $pattern = "
 -----------------------------------------------------------------------
@@ -788,7 +790,7 @@ ALTER TABLE %s DROP CONSTRAINT %s;
      *
      * @return string
      */
-    public function getModifyDatabaseDDL(DatabaseDiff $databaseDiff)
+    public function getModifyDatabaseDDL(DatabaseDiff $databaseDiff): string
     {
         $ret = '';
         foreach ($databaseDiff->getRemovedTables() as $table) {
@@ -827,7 +829,7 @@ ALTER TABLE %s DROP CONSTRAINT %s;
      *
      * @return string
      */
-    public function getRenameTableDDL($fromTableName, $toTableName)
+    public function getRenameTableDDL(string $fromTableName, string $toTableName): string
     {
         $pattern = "
 ALTER TABLE %s RENAME TO %s;
@@ -836,7 +838,7 @@ ALTER TABLE %s RENAME TO %s;
         return sprintf(
             $pattern,
             $this->quoteIdentifier($fromTableName),
-            $this->quoteIdentifier($toTableName)
+            $this->quoteIdentifier($toTableName),
         );
     }
 
@@ -848,7 +850,7 @@ ALTER TABLE %s RENAME TO %s;
      *
      * @return string
      */
-    public function getModifyTableDDL(TableDiff $tableDiff)
+    public function getModifyTableDDL(TableDiff $tableDiff): string
     {
         $ret = '';
 
@@ -906,13 +908,13 @@ ALTER TABLE %s RENAME TO %s;
                 }
                 $isCompatibleCall = preg_match(
                     sprintf('/ALTER TABLE %s (?!RENAME)/', $this->quoteIdentifier($toTable->getName())),
-                    $change
+                    $change,
                 );
                 if ($isCompatibleCall) {
                     $columnChanges[] = preg_replace(
                         sprintf('/ALTER TABLE %s /', $this->quoteIdentifier($toTable->getName())),
                         "\n\n  ",
-                        trim($change)
+                        trim($change),
                     );
                 } else {
                     $ret .= $change . ";\n";
@@ -925,7 +927,7 @@ ALTER TABLE %s RENAME TO %s;
 ALTER TABLE %s%s;
 ",
                     $this->quoteIdentifier($toTable->getName()),
-                    implode(',', $columnChanges)
+                    implode(',', $columnChanges),
                 );
             }
         }
@@ -957,7 +959,7 @@ ALTER TABLE %s%s;
      *
      * @return string
      */
-    public function getModifyTableColumnsDDL(TableDiff $tableDiff)
+    public function getModifyTableColumnsDDL(TableDiff $tableDiff): string
     {
         $ret = '';
 
@@ -988,7 +990,7 @@ ALTER TABLE %s%s;
      *
      * @return string
      */
-    public function getModifyTablePrimaryKeyDDL(TableDiff $tableDiff)
+    public function getModifyTablePrimaryKeyDDL(TableDiff $tableDiff): string
     {
         $ret = '';
 
@@ -1008,7 +1010,7 @@ ALTER TABLE %s%s;
      *
      * @return string
      */
-    public function getModifyTableIndicesDDL(TableDiff $tableDiff)
+    public function getModifyTableIndicesDDL(TableDiff $tableDiff): string
     {
         $ret = '';
 
@@ -1037,7 +1039,7 @@ ALTER TABLE %s%s;
      *
      * @return string
      */
-    public function getModifyTableForeignKeysDDL(TableDiff $tableDiff)
+    public function getModifyTableForeignKeysDDL(TableDiff $tableDiff): string
     {
         $ret = '';
 
@@ -1065,7 +1067,7 @@ ALTER TABLE %s%s;
      *
      * @return string
      */
-    public function getRemoveColumnDDL(Column $column)
+    public function getRemoveColumnDDL(Column $column): string
     {
         $pattern = "
 ALTER TABLE %s DROP COLUMN %s;
@@ -1074,7 +1076,7 @@ ALTER TABLE %s DROP COLUMN %s;
         return sprintf(
             $pattern,
             $this->quoteIdentifier($column->getTable()->getName()),
-            $this->quoteIdentifier($column->getName())
+            $this->quoteIdentifier($column->getName()),
         );
     }
 
@@ -1086,7 +1088,7 @@ ALTER TABLE %s DROP COLUMN %s;
      *
      * @return string
      */
-    public function getRenameColumnDDL(Column $fromColumn, Column $toColumn)
+    public function getRenameColumnDDL(Column $fromColumn, Column $toColumn): string
     {
         $pattern = "
 ALTER TABLE %s RENAME COLUMN %s TO %s;
@@ -1096,7 +1098,7 @@ ALTER TABLE %s RENAME COLUMN %s TO %s;
             $pattern,
             $this->quoteIdentifier($fromColumn->getTable()->getName()),
             $this->quoteIdentifier($fromColumn->getName()),
-            $this->quoteIdentifier($toColumn->getName())
+            $this->quoteIdentifier($toColumn->getName()),
         );
     }
 
@@ -1107,7 +1109,7 @@ ALTER TABLE %s RENAME COLUMN %s TO %s;
      *
      * @return string
      */
-    public function getModifyColumnDDL(ColumnDiff $columnDiff)
+    public function getModifyColumnDDL(ColumnDiff $columnDiff): string
     {
         $toColumn = $columnDiff->getToColumn();
         $pattern = "
@@ -1117,18 +1119,18 @@ ALTER TABLE %s MODIFY %s;
         return sprintf(
             $pattern,
             $this->quoteIdentifier($toColumn->getTable()->getName()),
-            $this->getColumnDDL($toColumn)
+            $this->getColumnDDL($toColumn),
         );
     }
 
     /**
      * Builds the DDL SQL to modify a list of columns
      *
-     * @param \Propel\Generator\Model\Diff\ColumnDiff[] $columnDiffs
+     * @param array<\Propel\Generator\Model\Diff\ColumnDiff> $columnDiffs
      *
      * @return string
      */
-    public function getModifyColumnsDDL($columnDiffs)
+    public function getModifyColumnsDDL(array $columnDiffs): string
     {
         $lines = [];
         $table = null;
@@ -1153,7 +1155,7 @@ ALTER TABLE %s MODIFY
         return sprintf(
             $pattern,
             $this->quoteIdentifier($table->getName()),
-            implode($sep, $lines)
+            implode($sep, $lines),
         );
     }
 
@@ -1164,7 +1166,7 @@ ALTER TABLE %s MODIFY
      *
      * @return string
      */
-    public function getAddColumnDDL(Column $column)
+    public function getAddColumnDDL(Column $column): string
     {
         $pattern = "
 ALTER TABLE %s ADD %s;
@@ -1173,18 +1175,18 @@ ALTER TABLE %s ADD %s;
         return sprintf(
             $pattern,
             $this->quoteIdentifier($column->getTable()->getName()),
-            $this->getColumnDDL($column)
+            $this->getColumnDDL($column),
         );
     }
 
     /**
      * Builds the DDL SQL to remove a list of columns
      *
-     * @param \Propel\Generator\Model\Column[] $columns
+     * @param array<\Propel\Generator\Model\Column> $columns
      *
      * @return string
      */
-    public function getAddColumnsDDL($columns)
+    public function getAddColumnsDDL(array $columns): string
     {
         $lines = [];
         $table = null;
@@ -1208,7 +1210,7 @@ ALTER TABLE %s ADD
         return sprintf(
             $pattern,
             $this->quoteIdentifier($table->getName()),
-            implode($sep, $lines)
+            implode($sep, $lines),
         );
     }
 
@@ -1219,7 +1221,7 @@ ALTER TABLE %s ADD
      *
      * @return bool True if the type has a size attribute
      */
-    public function hasSize($sqlType)
+    public function hasSize(string $sqlType): bool
     {
         return true;
     }
@@ -1231,7 +1233,7 @@ ALTER TABLE %s ADD
      *
      * @return bool True if the type has a scale attribute
      */
-    public function hasScale($sqlType)
+    public function hasScale(string $sqlType): bool
     {
         return true;
     }
@@ -1243,13 +1245,14 @@ ALTER TABLE %s ADD
      *
      * @return string
      */
-    public function quote($text)
+    public function quote(string $text): string
     {
-        if ($con = $this->getConnection()) {
+        $con = $this->getConnection();
+        if ($con) {
             return $con->quote($text);
-        } else {
-            return "'" . $this->disconnectedEscapeText($text) . "'";
         }
+
+        return "'" . $this->disconnectedEscapeText($text) . "'";
     }
 
     /**
@@ -1262,7 +1265,7 @@ ALTER TABLE %s ADD
      *
      * @return string
      */
-    protected function disconnectedEscapeText($text)
+    protected function disconnectedEscapeText(string $text): string
     {
         return str_replace("'", "''", $text);
     }
@@ -1275,7 +1278,7 @@ ALTER TABLE %s ADD
      *
      * @return string Quoted identifier.
      */
-    protected function quoteIdentifier($text)
+    protected function quoteIdentifier(string $text): string
     {
         return $this->isIdentifierQuotingEnabled() ? $this->doQuoting($text) : $text;
     }
@@ -1283,7 +1286,7 @@ ALTER TABLE %s ADD
     /**
      * @inheritDoc
      */
-    public function doQuoting($text)
+    public function doQuoting(string $text): string
     {
         return '"' . strtr($text, ['.' => '"."']) . '"';
     }
@@ -1293,7 +1296,7 @@ ALTER TABLE %s ADD
      *
      * @return bool
      */
-    public function supportsNativeDeleteTrigger()
+    public function supportsNativeDeleteTrigger(): bool
     {
         return false;
     }
@@ -1303,7 +1306,7 @@ ALTER TABLE %s ADD
      *
      * @return bool
      */
-    public function supportsInsertNullPk()
+    public function supportsInsertNullPk(): bool
     {
         return true;
     }
@@ -1311,7 +1314,7 @@ ALTER TABLE %s ADD
     /**
      * @return bool
      */
-    public function supportsIndexSize()
+    public function supportsIndexSize(): bool
     {
         return false;
     }
@@ -1321,7 +1324,7 @@ ALTER TABLE %s ADD
      *
      * @return bool
      */
-    public function hasStreamBlobImpl()
+    public function hasStreamBlobImpl(): bool
     {
         return false;
     }
@@ -1331,7 +1334,7 @@ ALTER TABLE %s ADD
      *
      * @return bool
      */
-    public function supportsSchemas()
+    public function supportsSchemas(): bool
     {
         return false;
     }
@@ -1341,7 +1344,7 @@ ALTER TABLE %s ADD
      *
      * @return bool
      */
-    public function supportsMigrations()
+    public function supportsMigrations(): bool
     {
         return true;
     }
@@ -1349,37 +1352,37 @@ ALTER TABLE %s ADD
     /**
      * @return bool
      */
-    public function supportsVarcharWithoutSize()
+    public function supportsVarcharWithoutSize(): bool
     {
         return false;
     }
 
     /**
-     * Returns the Boolean value for the RDBMS.
+     * Returns the boolean value for the RDBMS.
      *
-     * This value should match the Boolean value that is set
+     * This value should match the boolean value that is set
      * when using Propel's PreparedStatement::setBoolean().
      *
      * This function is used to set default column values when building
      * SQL.
      *
-     * @param bool|int|string $b A Boolean or string representation of Boolean ('y', 'true').
+     * @param string|int|bool $value A Boolean or string representation of Boolean ('y', 'true').
      *
      * @return string
      */
-    public function getBooleanString($b)
+    public function getBooleanString($value): string
     {
-        if (is_bool($b) && $b === true) {
+        if (is_bool($value) && $value === true) {
             return '1';
         }
 
-        if (is_int($b) && $b === 1) {
+        if (is_int($value) && $value === 1) {
             return '1';
         }
 
         if (
-            is_string($b)
-            && in_array(strtolower($b), ['1', 'true', 'y', 'yes'])
+            is_string($value)
+            && in_array(strtolower($value), ['1', 'true', 'y', 'yes'])
         ) {
             return '1';
         }
@@ -1392,10 +1395,10 @@ ALTER TABLE %s ADD
      *
      * @return string|null
      */
-    public function getPhpArrayString($stringValue)
+    public function getPhpArrayString(string $stringValue): ?string
     {
         $stringValue = trim($stringValue);
-        if (empty($stringValue)) {
+        if (!$stringValue) {
             return null;
         }
 
@@ -1405,7 +1408,7 @@ ALTER TABLE %s ADD
         }
 
         $value = implode(' | ', $values);
-        if (empty($value) || $value === ' | ') {
+        if ($value === ' | ') {
             return null;
         }
 
@@ -1417,7 +1420,7 @@ ALTER TABLE %s ADD
      *
      * @return string
      */
-    public function getTimestampFormatter()
+    public function getTimestampFormatter(): string
     {
         return 'Y-m-d H:i:s.u';
     }
@@ -1427,7 +1430,7 @@ ALTER TABLE %s ADD
      *
      * @return string
      */
-    public function getTimeFormatter()
+    public function getTimeFormatter(): string
     {
         return 'H:i:s.u';
     }
@@ -1437,13 +1440,13 @@ ALTER TABLE %s ADD
      *
      * @return string
      */
-    public function getDateFormatter()
+    public function getDateFormatter(): string
     {
         return 'Y-m-d';
     }
 
     /**
-     * Get the default On Delete behavior for foreign keys when not explicity set.
+     * Get the default On Delete behavior for foreign keys when not explicitly set.
      *
      * @return string
      */
@@ -1453,7 +1456,7 @@ ALTER TABLE %s ADD
     }
 
     /**
-     * Get the default On Update behavior for foreign keys when not explicity set.
+     * Get the default On Update behavior for foreign keys when not explicitly set.
      *
      * @return string
      */
@@ -1474,11 +1477,13 @@ ALTER TABLE %s ADD
      *
      * @return string
      */
-    public function getColumnBindingPHP(Column $column, $identifier, $columnValueAccessor, $tab = '            ')
+    public function getColumnBindingPHP(Column $column, string $identifier, string $columnValueAccessor, string $tab = '            '): string
     {
         $script = '';
         if ($column->getType() === PropelTypes::DATE) {
             $columnValueAccessor = $columnValueAccessor . ' ? ' . $columnValueAccessor . '->format("' . $this->getDateFormatter() . '") : null';
+        } elseif ($column->getType() === PropelTypes::TIME) {
+            $columnValueAccessor = $columnValueAccessor . ' ? ' . $columnValueAccessor . '->format("' . $this->getTimeFormatter() . '") : null';
         } elseif ($column->isTemporalType()) {
             $columnValueAccessor = $columnValueAccessor . ' ? ' . $columnValueAccessor . '->format("' . $this->getTimeStampFormatter() . '") : null';
         } elseif ($column->isLobType()) {
@@ -1495,7 +1500,7 @@ if (is_resource($columnValueAccessor)) {
 \$stmt->bindValue(%s, %s, %s);",
             $identifier,
             $columnValueAccessor,
-            PropelTypes::getPdoTypeString($column->getType())
+            PropelTypes::getPdoTypeString($column->getType()),
         );
 
         return preg_replace('/^(.+)/m', $tab . '$1', $script);
@@ -1517,10 +1522,15 @@ if (is_resource($columnValueAccessor)) {
      * @param string $tab
      * @param string|null $phpType
      *
-     * @return string|string[]|null
+     * @return array<string>|string|null
      */
-    public function getIdentifierPhp($columnValueMutator, $connectionVariableName = '$con', $sequenceName = '', $tab = '            ', $phpType = null)
-    {
+    public function getIdentifierPhp(
+        string $columnValueMutator,
+        string $connectionVariableName = '$con',
+        string $sequenceName = '',
+        string $tab = '            ',
+        ?string $phpType = null
+    ) {
         return sprintf(
             "
 %s%s = %s%s->lastInsertId(%s);",
@@ -1528,16 +1538,16 @@ if (is_resource($columnValueAccessor)) {
             $columnValueMutator,
             $connectionVariableName,
             $phpType ? '(' . $phpType . ') ' : '',
-            $sequenceName ? ("'" . $sequenceName . "'") : ''
+            $sequenceName ? ("'" . $sequenceName . "'") : '',
         );
     }
 
     /**
      * Returns a integer indexed array of default type sizes.
      *
-     * @return int[] type indexed array of integers
+     * @return array<int> type indexed array of integers
      */
-    public function getDefaultTypeSizes()
+    public function getDefaultTypeSizes(): array
     {
         return [];
     }
@@ -1549,11 +1559,11 @@ if (is_resource($columnValueAccessor)) {
      *
      * @return int
      */
-    public function getDefaultTypeSize($type)
+    public function getDefaultTypeSize(string $type): int
     {
         $sizes = $this->getDefaultTypeSizes();
 
-        return isset($sizes[strtolower($type)]) ? $sizes[strtolower($type)] : null;
+        return $sizes[strtolower($type)] ?? 0;
     }
 
     /**
@@ -1566,7 +1576,7 @@ if (is_resource($columnValueAccessor)) {
      *
      * @return void
      */
-    public function normalizeTable(Table $table)
+    public function normalizeTable(Table $table): void
     {
         if ($table->hasForeignKeys()) {
             foreach ($table->getForeignKeys() as $fk) {
@@ -1579,7 +1589,7 @@ if (is_resource($columnValueAccessor)) {
         }
 
         if (!$this->supportsIndexSize() && $table->getIndices()) {
-            // when the plafform does not support index sizes we reset it
+            // when the platform does not support index sizes we reset it
             foreach ($table->getIndices() as $index) {
                 $index->resetColumnsSize();
             }

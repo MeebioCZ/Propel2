@@ -30,17 +30,22 @@ class YamlFileLoader extends FileLoader
      *
      * @return array
      */
-    public function load($resource, $type = null)
+    public function load($resource, $type = null): array
     {
         $path = $this->locator->locate($resource);
 
         if (!is_readable($path)) {
-            throw new InputOutputException("You don't have permissions to access configuration file $resource.");
+            throw new InputOutputException(sprintf("You don't have permissions to access configuration file `%s`.", $resource));
         }
 
-        $content = Yaml::parse(file_get_contents($path));
+        $data = file_get_contents($path);
+        if (!$data) {
+            throw new InputOutputException(sprintf('Unable to read configuration file `%s`.', $resource));
+        }
 
-        //config file is empty
+        $content = Yaml::parse($data);
+
+        // config file is empty
         if ($content === null) {
             $content = [];
         }
@@ -49,9 +54,7 @@ class YamlFileLoader extends FileLoader
             throw new ParseException('Unable to parse the configuration file: wrong yaml content.');
         }
 
-        $content = $this->resolveParams($content); //Resolve parameter placeholders (%name%)
-
-        return $content;
+        return $this->resolveParams($content); //Resolve parameter placeholders (%name%)
     }
 
     /**
@@ -63,8 +66,8 @@ class YamlFileLoader extends FileLoader
      *
      * @return bool true if this class supports the given resource, false otherwise
      */
-    public function supports($resource, $type = null)
+    public function supports($resource, $type = null): bool
     {
-        return $this->checkSupports(['yaml', 'yml'], $resource);
+        return static::checkSupports(['yaml', 'yml'], $resource);
     }
 }

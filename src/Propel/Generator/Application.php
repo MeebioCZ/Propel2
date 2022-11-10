@@ -20,11 +20,11 @@ class Application extends SymfonyApplication
      *
      * @return int
      */
-    public function doRun(InputInterface $input, OutputInterface $output)
+    public function doRun(InputInterface $input, OutputInterface $output): int
     {
         if (extension_loaded('xdebug')) {
             $output->writeln(
-                '<comment>You are running propel with xdebug enabled. This has a major impact on runtime performance.</comment>' . "\n"
+                '<comment>You are running propel with xdebug enabled. This has a major impact on runtime performance.</comment>' . "\n",
             );
         }
 

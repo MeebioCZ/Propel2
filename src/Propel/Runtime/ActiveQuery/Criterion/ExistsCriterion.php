@@ -8,6 +8,7 @@
 
 namespace Propel\Runtime\ActiveQuery\Criterion;
 
+use Propel\Runtime\ActiveQuery\ModelCriteria;
 use Propel\Runtime\ActiveQuery\ModelJoin;
 use Propel\Runtime\Map\RelationMap;
 
@@ -16,8 +17,14 @@ use Propel\Runtime\Map\RelationMap;
  */
 class ExistsCriterion extends AbstractCriterion
 {
+    /**
+     * @var string
+     */
     public const TYPE_EXISTS = 'EXISTS';
 
+    /**
+     * @var string
+     */
     public const TYPE_NOT_EXISTS = 'NOT EXISTS';
 
     /**
@@ -30,22 +37,26 @@ class ExistsCriterion extends AbstractCriterion
     /**
      * Build NOT EXISTS instead of EXISTS
      *
-     * @var string $keyword Either ExistsCriterion::TYPE_EXISTS or ExistsCriterion::TYPE_NOT_EXISTS
+     * @var string Either ExistsCriterion::TYPE_EXISTS or ExistsCriterion::TYPE_NOT_EXISTS
      *
-     * @phpstan-var ExistsCriterion::TYPE_*
+     * @phpstan-var \Propel\Runtime\ActiveQuery\Criterion\ExistsCriterion::TYPE_*
      */
     private $typeOfExists = self::TYPE_EXISTS;
 
     /**
-     * @phpstan-param ExistsCriterion::TYPE_*|null $typeOfExists
+     * @phpstan-param \Propel\Runtime\ActiveQuery\Criterion\ExistsCriterion::TYPE_*|null $typeOfExists
      *
      * @param \Propel\Runtime\ActiveQuery\ModelCriteria $outerQuery
      * @param \Propel\Runtime\ActiveQuery\ModelCriteria $existsQuery
      * @param string|null $typeOfExists Either ExistsCriterion::TYPE_EXISTS or ExistsCriterion::TYPE_NOT_EXISTS
      * @param \Propel\Runtime\Map\RelationMap|null $relationMap where outer query is on the left side
      */
-    public function __construct($outerQuery, $existsQuery, ?string $typeOfExists = null, ?RelationMap $relationMap = null)
-    {
+    public function __construct(
+        $outerQuery,
+        ModelCriteria $existsQuery,
+        ?string $typeOfExists = null,
+        ?RelationMap $relationMap = null
+    ) {
         parent::__construct($outerQuery, '', null, null);
         $this->existsQuery = $existsQuery;
         $this->typeOfExists = ($typeOfExists === self::TYPE_NOT_EXISTS) ? self::TYPE_NOT_EXISTS : self::TYPE_EXISTS;
@@ -64,7 +75,7 @@ class ExistsCriterion extends AbstractCriterion
      *
      * @return void
      */
-    protected function appendPsForUniqueClauseTo(&$sb, array &$params)
+    protected function appendPsForUniqueClauseTo(string &$sb, array &$params): void
     {
         $existsQuery = $this->existsQuery
             ->clearSelectColumns()
@@ -79,7 +90,7 @@ class ExistsCriterion extends AbstractCriterion
      *
      * @return \Propel\Runtime\ActiveQuery\Criterion\AbstractCriterion
      */
-    protected function buildJoinCondition($outerQuery, RelationMap $relationMap)
+    protected function buildJoinCondition($outerQuery, RelationMap $relationMap): AbstractCriterion
     {
         $join = new ModelJoin();
         $outerAlias = $outerQuery->getModelAlias();

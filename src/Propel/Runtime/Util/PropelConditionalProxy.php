@@ -81,24 +81,28 @@ class PropelConditionalProxy
      * Returns a new level PropelConditionalProxy instance.
      * Allows for conditional statements in a fluid interface.
      *
-     * @param bool $cond
+     * @param mixed $cond Casts to bool for variable evaluation
      *
      * @return $this|\Propel\Runtime\ActiveQuery\Criteria
      */
     public function _if($cond)
     {
+        $cond = (bool)$cond; // Intentionally not typing the param to allow for evaluation inside this function
+
         return $this->criteria->_if($cond);
     }
 
     /**
      * Allows for conditional statements in a fluid interface.
      *
-     * @param bool $cond ignored
+     * @param mixed $cond Casts to bool for variable evaluation
      *
      * @return $this|\Propel\Runtime\ActiveQuery\Criteria
      */
     public function _elseif($cond)
     {
+        $cond = (bool)$cond; // Intentionally not typing the param to allow for evaluation inside this function
+
         return $this->setConditionalState(!$this->wasTrue && $cond);
     }
 
@@ -128,7 +132,7 @@ class PropelConditionalProxy
      *
      * @return bool
      */
-    protected function getConditionalState()
+    protected function getConditionalState(): bool
     {
         return $this->state && $this->parentState;
     }
@@ -149,7 +153,7 @@ class PropelConditionalProxy
     /**
      * @return self|null
      */
-    public function getParentProxy()
+    public function getParentProxy(): ?self
     {
         return $this->parent;
     }
@@ -172,7 +176,7 @@ class PropelConditionalProxy
      *
      * @return $this
      */
-    public function __call($name, $arguments)
+    public function __call(string $name, array $arguments)
     {
         return $this;
     }

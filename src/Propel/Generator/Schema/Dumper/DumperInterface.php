@@ -20,15 +20,15 @@ interface DumperInterface
      *
      * @return string The dumped formatted output (XML, YAML, CSV...)
      */
-    public function dump(Database $database);
+    public function dump(Database $database): string;
 
     /**
      * Dumps a single Schema model into an XML formatted version.
      *
      * @param \Propel\Generator\Model\Schema $schema The schema model
-     * @param bool $doFinalInitialization Whether or not to validate the schema
+     * @param bool $doFinalInitialization Whether to validate the schema
      *
      * @return string The dumped formatted output (XML, YAML, CSV...)
      */
-    public function dumpSchema(Schema $schema, $doFinalInitialization = true);
+    public function dumpSchema(Schema $schema, bool $doFinalInitialization = true): string;
 }

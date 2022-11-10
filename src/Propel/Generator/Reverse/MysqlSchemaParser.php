@@ -35,7 +35,7 @@ class MysqlSchemaParser extends AbstractSchemaParser
     /**
      * Map MySQL native types to Propel types.
      *
-     * @var string[]
+     * @var array<string>
      */
     private static $mysqlTypeMap = [
         'tinyint' => PropelTypes::TINYINT,
@@ -55,7 +55,7 @@ class MysqlSchemaParser extends AbstractSchemaParser
         'date' => PropelTypes::DATE,
         'time' => PropelTypes::TIME,
         'year' => PropelTypes::INTEGER,
-        'datetime' => PropelTypes::TIMESTAMP,
+        'datetime' => PropelTypes::DATETIME,
         'timestamp' => PropelTypes::TIMESTAMP,
         'tinyblob' => PropelTypes::BINARY,
         'blob' => PropelTypes::BLOB,
@@ -70,7 +70,7 @@ class MysqlSchemaParser extends AbstractSchemaParser
     ];
 
     /**
-     * @var int[]
+     * @var array<int>
      */
     protected static $defaultTypeSizes = [
         'char' => 1,
@@ -84,9 +84,9 @@ class MysqlSchemaParser extends AbstractSchemaParser
     /**
      * Gets a type mapping from native types to Propel types
      *
-     * @return string[]
+     * @return array<string>
      */
-    protected function getTypeMapping()
+    protected function getTypeMapping(): array
     {
         return self::$mysqlTypeMap;
     }
@@ -103,11 +103,11 @@ class MysqlSchemaParser extends AbstractSchemaParser
 
     /**
      * @param \Propel\Generator\Model\Database $database
-     * @param \Propel\Generator\Model\Table[] $additionalTables
+     * @param array<\Propel\Generator\Model\Table> $additionalTables
      *
      * @return int
      */
-    public function parse(Database $database, array $additionalTables = [])
+    public function parse(Database $database, array $additionalTables = []): int
     {
         if ($this->getGeneratorConfig() !== null) {
             $this->addVendorInfo = $this->getGeneratorConfig()->get()['migrations']['addVendorInfo'];
@@ -143,7 +143,7 @@ class MysqlSchemaParser extends AbstractSchemaParser
      *
      * @return void
      */
-    protected function parseTables(Database $database, $filterTable = null)
+    protected function parseTables(Database $database, ?Table $filterTable = null): void
     {
         $sql = 'SHOW FULL TABLES';
 
@@ -183,7 +183,7 @@ class MysqlSchemaParser extends AbstractSchemaParser
      *
      * @return void
      */
-    protected function addColumns(Table $table)
+    protected function addColumns(Table $table): void
     {
         /** @var \PDOStatement $stmt */
         $stmt = $this->dbh->query(sprintf('SHOW COLUMNS FROM %s', $this->getPlatform()->doQuoting($table->getName())));
@@ -204,7 +204,7 @@ class MysqlSchemaParser extends AbstractSchemaParser
      *
      * @return \Propel\Generator\Model\Column
      */
-    public function getColumnFromRow($row, Table $table)
+    public function getColumnFromRow(array $row, Table $table): Column
     {
         $name = $row['Field'];
         $isNullable = ($row['Null'] === 'YES');
@@ -346,7 +346,7 @@ WHERE table_schema=DATABASE()
   AND table_name=($tableName)
 EOT;
 
-        /** @var string|null */
+        /** @phpstan-var string|null */
         return $this->dbh->query($query)->fetchColumn();
     }
 
@@ -369,7 +369,7 @@ WHERE table_schema=DATABASE()
   AND column_name=($columnName)
 EOT;
 
-        /** @var string|null */
+        /** @phpstan-var string|null */
         return $this->dbh->query($query)->fetchColumn();
     }
 
@@ -380,7 +380,7 @@ EOT;
      *
      * @return void
      */
-    protected function addForeignKeys(Table $table)
+    protected function addForeignKeys(Table $table): void
     {
         $database = $table->getDatabase();
 
@@ -401,12 +401,14 @@ EOT;
                 $fkey = $matches[5][$curKey];
 
                 $lcols = [];
-                foreach (preg_split('/`, `/', $rawlcol) as $piece) {
+                $pieces = explode('`, `', $rawlcol);
+                foreach ($pieces as $piece) {
                     $lcols[] = trim($piece, '` ');
                 }
 
                 $fcols = [];
-                foreach (preg_split('/`, `/', $rawfcol) as $piece) {
+                $pieces = explode('`, `', $rawfcol);
+                foreach ($pieces as $piece) {
                     $fcols[] = trim($piece, '` ');
                 }
 
@@ -476,7 +478,7 @@ EOT;
      *
      * @return void
      */
-    protected function addIndexes(Table $table)
+    protected function addIndexes(Table $table): void
     {
         /** @var \PDOStatement $stmt */
         $stmt = $this->dbh->query(sprintf('SHOW INDEX FROM %s', $this->getPlatform()->doQuoting($table->getName())));
@@ -484,12 +486,12 @@ EOT;
         // Loop through the returned results, grouping the same key_name together
         // adding each column for that key.
 
-        /** @var \Propel\Generator\Model\Index[] $indexes */
+        /** @var array<\Propel\Generator\Model\Index> $indexes */
         $indexes = [];
         while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
             $colName = $row['Column_name'];
             $colSize = $row['Sub_part'];
-            $name = $row['Key_name'];
+            $name = (string)$row['Key_name'];
 
             if ($name === 'PRIMARY') {
                 continue;
@@ -531,7 +533,7 @@ EOT;
      *
      * @return void
      */
-    protected function addPrimaryKey(Table $table)
+    protected function addPrimaryKey(Table $table): void
     {
         /** @var \PDOStatement $stmt */
         $stmt = $this->dbh->query(sprintf('SHOW KEYS FROM %s', $this->getPlatform()->doQuoting($table->getName())));
@@ -558,7 +560,7 @@ EOT;
      *
      * @return void
      */
-    protected function addTableVendorInfo(Table $table)
+    protected function addTableVendorInfo(Table $table): void
     {
         /** @var \PDOStatement $stmt */
         $stmt = $this->dbh->query("SHOW TABLE STATUS LIKE '" . $table->getName() . "'");

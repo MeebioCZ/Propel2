@@ -8,6 +8,7 @@
 
 namespace Propel\Generator\Behavior\ConcreteInheritance;
 
+use Propel\Generator\Builder\Om\ObjectBuilder;
 use Propel\Generator\Model\Behavior;
 
 /**
@@ -27,7 +28,7 @@ class ConcreteInheritanceParentBehavior extends Behavior
     /**
      * Default parameters value
      *
-     * @var string[]
+     * @var array<string, mixed>
      */
     protected $parameters = [
         'descendant_column' => 'descendant_class',
@@ -36,7 +37,7 @@ class ConcreteInheritanceParentBehavior extends Behavior
     /**
      * @return void
      */
-    public function modifyTable()
+    public function modifyTable(): void
     {
         $table = $this->getTable();
         if (!$table->hasColumn($this->getParameter('descendant_column'))) {
@@ -51,7 +52,7 @@ class ConcreteInheritanceParentBehavior extends Behavior
     /**
      * @return string
      */
-    protected function getColumnGetter()
+    protected function getColumnGetter(): string
     {
         return 'get' . $this->getColumnForParameter('descendant_column')->getPhpName();
     }
@@ -61,7 +62,7 @@ class ConcreteInheritanceParentBehavior extends Behavior
      *
      * @return string
      */
-    public function objectMethods($builder)
+    public function objectMethods(ObjectBuilder $builder): string
     {
         $this->builder = $builder;
         $this->builder->declareClasses('Propel\Runtime\ActiveQuery\PropelQuery');
@@ -77,15 +78,15 @@ class ConcreteInheritanceParentBehavior extends Behavior
      *
      * @return void
      */
-    protected function addHasChildObject(&$script)
+    protected function addHasChildObject(string &$script): void
     {
         $script .= "
 /**
- * Whether or not this object is the parent of a child object
+ * Whether this object is the parent of a child object
  *
- * @return    bool
+ * @return bool
  */
-public function hasChildObject()
+public function hasChildObject(): bool
 {
     return \$this->" . $this->getColumnGetter() . "() !== null;
 }
@@ -97,13 +98,13 @@ public function hasChildObject()
      *
      * @return void
      */
-    protected function addGetChildObject(&$script)
+    protected function addGetChildObject(string &$script): void
     {
         $script .= "
 /**
  * Get the child object of this object
  *
- * @return    mixed
+ * @return mixed
  */
 public function getChildObject()
 {

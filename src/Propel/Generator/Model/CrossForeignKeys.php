@@ -58,7 +58,7 @@ class CrossForeignKeys
     /**
      * All other outgoing relations from the middle-table to other tables.
      *
-     * @var \Propel\Generator\Model\ForeignKey[]
+     * @var array<\Propel\Generator\Model\ForeignKey>
      */
     protected $crossForeignKeys = [];
 
@@ -80,13 +80,13 @@ class CrossForeignKeys
     }
 
     /**
-     * @param \Propel\Generator\Model\ForeignKey|null $foreignKey
+     * @param \Propel\Generator\Model\ForeignKey $foreignKey
      *
      * @return void
      */
-    public function setIncomingForeignKey($foreignKey)
+    public function setIncomingForeignKey(ForeignKey $foreignKey): void
     {
-        $this->setMiddleTable($foreignKey ? $foreignKey->getTable() : null);
+        $this->setMiddleTable($foreignKey->getTable());
         $this->incomingForeignKey = $foreignKey;
     }
 
@@ -95,7 +95,7 @@ class CrossForeignKeys
      *
      * @return \Propel\Generator\Model\ForeignKey|null
      */
-    public function getIncomingForeignKey()
+    public function getIncomingForeignKey(): ?ForeignKey
     {
         return $this->incomingForeignKey;
     }
@@ -130,7 +130,7 @@ class CrossForeignKeys
      *
      * @return bool
      */
-    public function isAtLeastOneLocalPrimaryKeyNotCovered(ForeignKey $fk)
+    public function isAtLeastOneLocalPrimaryKeyNotCovered(ForeignKey $fk): bool
     {
         $primaryKeys = $fk->getLocalPrimaryKeys();
         foreach ($primaryKeys as $primaryKey) {
@@ -154,9 +154,9 @@ class CrossForeignKeys
     /**
      * Returns all primary keys of middle-table which are not already covered by at least on of our cross foreignKey collection.
      *
-     * @return \Propel\Generator\Model\Column[]
+     * @return array<\Propel\Generator\Model\Column>
      */
-    public function getUnclassifiedPrimaryKeys()
+    public function getUnclassifiedPrimaryKeys(): array
     {
         $pks = [];
         foreach ($this->getMiddleTable()->getPrimaryKey() as $pk) {
@@ -187,7 +187,7 @@ class CrossForeignKeys
      *
      * @return void
      */
-    public function addCrossForeignKey(ForeignKey $foreignKey)
+    public function addCrossForeignKey(ForeignKey $foreignKey): void
     {
         $this->crossForeignKeys[] = $foreignKey;
     }
@@ -195,17 +195,17 @@ class CrossForeignKeys
     /**
      * @return bool
      */
-    public function hasCrossForeignKeys()
+    public function hasCrossForeignKeys(): bool
     {
         return (bool)$this->crossForeignKeys;
     }
 
     /**
-     * @param \Propel\Generator\Model\ForeignKey[] $foreignKeys
+     * @param array<\Propel\Generator\Model\ForeignKey> $foreignKeys
      *
      * @return void
      */
-    public function setCrossForeignKeys(array $foreignKeys)
+    public function setCrossForeignKeys(array $foreignKeys): void
     {
         $this->crossForeignKeys = $foreignKeys;
     }
@@ -213,9 +213,9 @@ class CrossForeignKeys
     /**
      * All other outgoing relations from the middle-table to other tables.
      *
-     * @return \Propel\Generator\Model\ForeignKey[]
+     * @return array<\Propel\Generator\Model\ForeignKey>
      */
-    public function getCrossForeignKeys()
+    public function getCrossForeignKeys(): array
     {
         return $this->crossForeignKeys;
     }
@@ -225,7 +225,7 @@ class CrossForeignKeys
      *
      * @return void
      */
-    public function setMiddleTable(Table $foreignTable)
+    public function setMiddleTable(Table $foreignTable): void
     {
         $this->middleTable = $foreignTable;
     }
@@ -235,7 +235,7 @@ class CrossForeignKeys
      *
      * @return \Propel\Generator\Model\Table
      */
-    public function getMiddleTable()
+    public function getMiddleTable(): Table
     {
         return $this->middleTable;
     }
@@ -245,7 +245,7 @@ class CrossForeignKeys
      *
      * @return void
      */
-    public function setTable(Table $table)
+    public function setTable(Table $table): void
     {
         $this->table = $table;
     }
@@ -255,7 +255,7 @@ class CrossForeignKeys
      *
      * @return \Propel\Generator\Model\Table
      */
-    public function getTable()
+    public function getTable(): Table
     {
         return $this->table;
     }

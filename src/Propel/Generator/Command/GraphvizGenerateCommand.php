@@ -18,6 +18,9 @@ use Symfony\Component\Console\Output\OutputInterface;
  */
 class GraphvizGenerateCommand extends AbstractCommand
 {
+    /**
+     * @var string
+     */
     public const DEFAULT_OUTPUT_DIRECTORY = 'generated-graphviz';
 
     /**
@@ -51,7 +54,7 @@ class GraphvizGenerateCommand extends AbstractCommand
         $manager = new GraphvizManager();
         $manager->setGeneratorConfig($generatorConfig);
         $manager->setSchemas($this->getSchemas($generatorConfig->getSection('paths')['schemaDir'], $generatorConfig->getSection('generator')['recursive']));
-        $manager->setLoggerClosure(function ($message) use ($input, $output) {
+        $manager->setLoggerClosure(function ($message) use ($input, $output): void {
             if ($input->getOption('verbose')) {
                 $output->writeln($message);
             }

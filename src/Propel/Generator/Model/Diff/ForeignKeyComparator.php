@@ -27,7 +27,7 @@ class ForeignKeyComparator
      *
      * @return bool false if the two fks are similar, true if they have differences
      */
-    public static function computeDiff(ForeignKey $fromFk, ForeignKey $toFk, $caseInsensitive = false)
+    public static function computeDiff(ForeignKey $fromFk, ForeignKey $toFk, bool $caseInsensitive = false): bool
     {
         // Check for differences in local and remote table
         $test = $caseInsensitive ?
@@ -38,8 +38,16 @@ class ForeignKeyComparator
             return true;
         }
 
+        $fromFkForeignTableName = !$fromFk->getForeignTableName()
+            ? ''
+            : strtolower($fromFk->getForeignTableName());
+
+        $toFkForeignTableName = !$toFk->getForeignTableName()
+            ? ''
+            : strtolower($toFk->getForeignTableName());
+
         $test = $caseInsensitive ?
-            strtolower($fromFk->getForeignTableName()) !== strtolower($toFk->getForeignTableName()) :
+            $fromFkForeignTableName !== $toFkForeignTableName :
             $fromFk->getForeignTableName() !== $toFk->getForeignTableName();
 
         if ($test) {

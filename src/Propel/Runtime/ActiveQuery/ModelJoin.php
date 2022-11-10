@@ -8,6 +8,7 @@
 
 namespace Propel\Runtime\ActiveQuery;
 
+use Propel\Runtime\Exception\LogicException;
 use Propel\Runtime\Map\RelationMap;
 use Propel\Runtime\Map\TableMap;
 
@@ -40,7 +41,7 @@ class ModelJoin extends Join
      *
      * @return $this
      */
-    public function setRelationMap(RelationMap $relationMap, $leftTableAlias = null, $relationAlias = null)
+    public function setRelationMap(RelationMap $relationMap, ?string $leftTableAlias = null, ?string $relationAlias = null)
     {
         $leftCols = $relationMap->getLeftColumns();
         $rightCols = $relationMap->getRightColumns();
@@ -56,7 +57,7 @@ class ModelJoin extends Join
                         $rightCols[$i]->getName(),
                         $relationAlias,
                         $leftValues[$i],
-                        Criteria::EQUAL
+                        Criteria::EQUAL,
                     );
                 } else {
                     //many-to-one
@@ -65,7 +66,7 @@ class ModelJoin extends Join
                         $leftCols[$i]->getName(),
                         $leftTableAlias,
                         $leftValues[$i],
-                        Criteria::EQUAL
+                        Criteria::EQUAL,
                     );
                 }
             } else {
@@ -76,7 +77,7 @@ class ModelJoin extends Join
                     $rightCols[$i]->getTableName(),
                     $rightCols[$i]->getName(),
                     $relationAlias,
-                    Criteria::EQUAL
+                    Criteria::EQUAL,
                 );
             }
         }
@@ -86,9 +87,9 @@ class ModelJoin extends Join
     }
 
     /**
-     * @return \Propel\Runtime\Map\RelationMap
+     * @return \Propel\Runtime\Map\RelationMap|null
      */
-    public function getRelationMap()
+    public function getRelationMap(): ?RelationMap
     {
         return $this->relationMap;
     }
@@ -110,15 +111,32 @@ class ModelJoin extends Join
     /**
      * Gets the right tableMap for this join
      *
-     * @return \Propel\Runtime\Map\TableMap The table map
+     * @return \Propel\Runtime\Map\TableMap|null The table map
      */
-    public function getTableMap()
+    public function getTableMap(): ?TableMap
     {
         if ($this->tableMap === null && $this->relationMap !== null) {
             $this->tableMap = $this->relationMap->getRightTable();
         }
 
         return $this->tableMap;
+    }
+
+    /**
+     * Gets the right tableMap for this join
+     *
+     * @throws \Propel\Runtime\Exception\LogicException
+     *
+     * @return \Propel\Runtime\Map\TableMap The table map
+     */
+    public function getTableMapOrFail(): TableMap
+    {
+        $tableMap = $this->getTableMap();
+        if ($tableMap == null) {
+            throw new LogicException('TableMap is not defined');
+        }
+
+        return $tableMap;
     }
 
     /**
@@ -134,9 +152,9 @@ class ModelJoin extends Join
     }
 
     /**
-     * @return self
+     * @return self|null
      */
-    public function getPreviousJoin()
+    public function getPreviousJoin(): ?self
     {
         return $this->previousJoin;
     }
@@ -144,7 +162,7 @@ class ModelJoin extends Join
     /**
      * @return bool
      */
-    public function isPrimary()
+    public function isPrimary(): bool
     {
         return $this->previousJoin === null;
     }
@@ -154,7 +172,7 @@ class ModelJoin extends Join
      *
      * @return $this
      */
-    public function setRelationAlias($relationAlias)
+    public function setRelationAlias(string $relationAlias)
     {
         $this->setRightTableAlias($relationAlias);
 
@@ -164,7 +182,7 @@ class ModelJoin extends Join
     /**
      * @return string|null
      */
-    public function getRelationAlias()
+    public function getRelationAlias(): ?string
     {
         return $this->getRightTableAlias();
     }
@@ -172,7 +190,7 @@ class ModelJoin extends Join
     /**
      * @return bool
      */
-    public function hasRelationAlias()
+    public function hasRelationAlias(): bool
     {
         return $this->hasRightTableAlias();
     }
@@ -180,7 +198,7 @@ class ModelJoin extends Join
     /**
      * @return bool
      */
-    public function isIdentifierQuotingEnabled()
+    public function isIdentifierQuotingEnabled(): bool
     {
         return $this->getTableMap()->isIdentifierQuotingEnabled();
     }
@@ -197,7 +215,7 @@ class ModelJoin extends Join
      *
      * @return object The base Object of this join
      */
-    public function getObjectToRelate($startObject)
+    public function getObjectToRelate(object $startObject): object
     {
         if ($this->isPrimary()) {
             return $startObject;
@@ -211,14 +229,13 @@ class ModelJoin extends Join
     }
 
     /**
-     * @param \Propel\Runtime\ActiveQuery\Join|null $join
+     * @param \Propel\Runtime\ActiveQuery\Join $join
      *
      * @return bool
      */
-    public function equals($join)
+    public function equals(Join $join): bool
     {
-        /** @var ModelJoin $join */
-
+        /** @phpstan-var \Propel\Runtime\ActiveQuery\ModelJoin $join */
         return parent::equals($join)
             && $this->relationMap == $join->getRelationMap()
             && $this->previousJoin == $join->getPreviousJoin()
@@ -228,7 +245,7 @@ class ModelJoin extends Join
     /**
      * @return string
      */
-    public function __toString()
+    public function __toString(): string
     {
         return parent::toString()
             . ' tableMap: ' . ($this->tableMap ? get_class($this->tableMap) : 'null')

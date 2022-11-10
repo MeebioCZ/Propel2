@@ -15,6 +15,8 @@ use Propel\Generator\Builder\Util\SchemaReader;
 use Propel\Generator\Config\GeneratorConfigInterface;
 use Propel\Generator\Exception\BuildException;
 use Propel\Generator\Exception\EngineException;
+use Propel\Generator\Model\Database;
+use Propel\Generator\Model\Schema;
 use XsltProcessor;
 
 /**
@@ -34,7 +36,7 @@ abstract class AbstractManager
     protected $dataModels = [];
 
     /**
-     * @var \Propel\Generator\Model\Database[]
+     * @var array<\Propel\Generator\Model\Database>
      */
     protected $databases;
 
@@ -64,8 +66,6 @@ abstract class AbstractManager
 
     /**
      * The XSD schema file to use for validation.
-     *
-     * @deprecated Not in use and not working due to missing class.
      *
      * @var mixed
      */
@@ -116,7 +116,7 @@ abstract class AbstractManager
      *
      * @return array
      */
-    public function getSchemas()
+    public function getSchemas(): array
     {
         return $this->schemas;
     }
@@ -128,7 +128,7 @@ abstract class AbstractManager
      *
      * @return void
      */
-    public function setSchemas($schemas)
+    public function setSchemas(array $schemas): void
     {
         $this->schemas = $schemas;
     }
@@ -140,7 +140,7 @@ abstract class AbstractManager
      *
      * @return void
      */
-    public function setWorkingDirectory($workingDirectory)
+    public function setWorkingDirectory(string $workingDirectory): void
     {
         $this->workingDirectory = $workingDirectory;
     }
@@ -148,9 +148,9 @@ abstract class AbstractManager
     /**
      * Returns the working directory path.
      *
-     * @return string
+     * @return string|null
      */
-    public function getWorkingDirectory()
+    public function getWorkingDirectory(): ?string
     {
         return $this->workingDirectory;
     }
@@ -159,9 +159,9 @@ abstract class AbstractManager
      * Returns the data models that have been
      * processed.
      *
-     * @return \Propel\Generator\Model\Schema[]
+     * @return array<\Propel\Generator\Model\Schema>
      */
-    public function getDataModels()
+    public function getDataModels(): array
     {
         if (!$this->dataModelsLoaded) {
             $this->loadDataModels();
@@ -175,7 +175,7 @@ abstract class AbstractManager
      *
      * @return array
      */
-    public function getDataModelDbMap()
+    public function getDataModelDbMap(): array
     {
         if (!$this->dataModelsLoaded) {
             $this->loadDataModels();
@@ -185,9 +185,9 @@ abstract class AbstractManager
     }
 
     /**
-     * @return \Propel\Generator\Model\Database[]
+     * @return array<\Propel\Generator\Model\Database>
      */
-    public function getDatabases()
+    public function getDatabases(): array
     {
         if ($this->databases === null) {
             $databases = [];
@@ -217,7 +217,7 @@ abstract class AbstractManager
      *
      * @return \Propel\Generator\Model\Database|null
      */
-    public function getDatabase($name)
+    public function getDatabase(string $name): ?Database
     {
         $dbs = $this->getDatabases();
 
@@ -231,7 +231,7 @@ abstract class AbstractManager
      *
      * @return void
      */
-    public function setValidate($validate)
+    public function setValidate(bool $validate): void
     {
         $this->validate = (bool)$validate;
     }
@@ -244,7 +244,7 @@ abstract class AbstractManager
      *
      * @return void
      */
-    public function setXsd($xsd)
+    public function setXsd(string $xsd): void
     {
         $this->xsd = $xsd;
     }
@@ -257,7 +257,7 @@ abstract class AbstractManager
      *
      * @return void
      */
-    public function setXsl($xsl)
+    public function setXsl($xsl): void
     {
         $this->xsl = $xsl;
     }
@@ -269,7 +269,7 @@ abstract class AbstractManager
      *
      * @return void
      */
-    public function setDbEncoding($encoding)
+    public function setDbEncoding(string $encoding): void
     {
         $this->dbEncoding = $encoding;
     }
@@ -281,7 +281,7 @@ abstract class AbstractManager
      *
      * @return void
      */
-    public function setLoggerClosure(Closure $logger)
+    public function setLoggerClosure(Closure $logger): void
     {
         $this->loggerClosure = $logger;
     }
@@ -295,7 +295,7 @@ abstract class AbstractManager
      *
      * @return void
      */
-    protected function loadDataModels()
+    protected function loadDataModels(): void
     {
         $schemas = [];
         $totalNbTables = 0;
@@ -351,7 +351,7 @@ abstract class AbstractManager
 
         $this->log(sprintf('%d tables found in %d schema files.', $totalNbTables, count($dataModelFiles)));
 
-        if (empty($schemas)) {
+        if (!$schemas) {
             throw new BuildException('No schema files were found (matching your schema fileset definition).');
         }
 
@@ -375,9 +375,9 @@ abstract class AbstractManager
     }
 
     /**
-     * Replaces all external-schema nodes with the content of xml schema that node refers to
+     * Replaces all external-schema nodes with the content of XML schema that node refers to
      *
-     * Recurses to include any external schema referenced from in an included xml (and deeper)
+     * Recurses to include any external schema referenced from in an included XML (and deeper)
      * Note: this function very much assumes at least a reasonable XML schema, maybe it'll proof
      * users don't have those and adding some more informative exceptions would be better
      *
@@ -388,7 +388,7 @@ abstract class AbstractManager
      *
      * @return int number of included external schemas
      */
-    protected function includeExternalSchemas(DOMDocument $dom, $srcDir)
+    protected function includeExternalSchemas(DOMDocument $dom, string $srcDir): int
     {
         $databaseNode = $dom->getElementsByTagName('database')->item(0);
         $externalSchemaNodes = $dom->getElementsByTagName('external-schema');
@@ -435,7 +435,7 @@ abstract class AbstractManager
      *
      * @return \Propel\Generator\Model\Schema
      */
-    protected function joinDataModels(array $schemas)
+    protected function joinDataModels(array $schemas): Schema
     {
         $mainSchema = array_shift($schemas);
         $mainSchema->joinSchemas($schemas);
@@ -449,7 +449,7 @@ abstract class AbstractManager
      *
      * @return \Propel\Generator\Config\GeneratorConfigInterface
      */
-    protected function getGeneratorConfig()
+    protected function getGeneratorConfig(): GeneratorConfigInterface
     {
         return $this->generatorConfig;
     }
@@ -461,7 +461,7 @@ abstract class AbstractManager
      *
      * @return void
      */
-    public function setGeneratorConfig(GeneratorConfigInterface $generatorConfig)
+    public function setGeneratorConfig(GeneratorConfigInterface $generatorConfig): void
     {
         $this->generatorConfig = $generatorConfig;
     }
@@ -471,7 +471,7 @@ abstract class AbstractManager
      *
      * @return void
      */
-    protected function validate()
+    protected function validate(): void
     {
         if ($this->validate) {
             if (!$this->xsd) {
@@ -485,7 +485,7 @@ abstract class AbstractManager
      *
      * @return void
      */
-    protected function log($message)
+    protected function log(string $message): void
     {
         if ($this->loggerClosure !== null) {
             $closure = $this->loggerClosure;
@@ -500,9 +500,9 @@ abstract class AbstractManager
      *
      * @throws \Exception
      *
-     * @return string[]
+     * @return array<string>
      */
-    protected function getProperties($file)
+    protected function getProperties(string $file): array
     {
         $properties = [];
 
@@ -513,7 +513,7 @@ abstract class AbstractManager
         foreach ($lines as $line) {
             $line = trim($line);
 
-            if (empty($line) || in_array($line[0], ['#', ';'])) {
+            if (!$line || in_array($line[0], ['#', ';'], true)) {
                 continue;
             }
 

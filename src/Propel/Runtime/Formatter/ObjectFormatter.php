@@ -8,6 +8,7 @@
 
 namespace Propel\Runtime\Formatter;
 
+use Propel\Runtime\ActiveRecord\ActiveRecordInterface;
 use Propel\Runtime\DataFetcher\DataFetcherInterface;
 use Propel\Runtime\Exception\LogicException;
 
@@ -29,7 +30,7 @@ class ObjectFormatter extends AbstractFormatter
      *
      * @throws \Propel\Runtime\Exception\LogicException
      *
-     * @return array|\Propel\Runtime\Collection\Collection
+     * @return \Propel\Runtime\Collection\Collection|array
      */
     public function format(?DataFetcherInterface $dataFetcher = null)
     {
@@ -70,7 +71,7 @@ class ObjectFormatter extends AbstractFormatter
     /**
      * @return string|null
      */
-    public function getCollectionClassName()
+    public function getCollectionClassName(): ?string
     {
         return $this->getTableMap()->getCollectionClassName();
     }
@@ -82,7 +83,7 @@ class ObjectFormatter extends AbstractFormatter
      *
      * @return \Propel\Runtime\ActiveRecord\ActiveRecordInterface|null
      */
-    public function formatOne(?DataFetcherInterface $dataFetcher = null)
+    public function formatOne(?DataFetcherInterface $dataFetcher = null): ?ActiveRecordInterface
     {
         $this->checkInit();
         $result = null;
@@ -107,7 +108,7 @@ class ObjectFormatter extends AbstractFormatter
     /**
      * @return bool
      */
-    public function isObjectFormatter()
+    public function isObjectFormatter(): bool
     {
         return true;
     }
@@ -122,7 +123,7 @@ class ObjectFormatter extends AbstractFormatter
      *
      * @return \Propel\Runtime\ActiveRecord\ActiveRecordInterface
      */
-    public function getAllObjectsFromRow($row)
+    public function getAllObjectsFromRow(array $row): ActiveRecordInterface
     {
         // main object
         [$obj, $col] = $this->getTableMap()->populateObject($row, 0, $this->getDataFetcher()->getIndexType());
@@ -136,6 +137,10 @@ class ObjectFormatter extends AbstractFormatter
             $obj = $this->objects[$serializedPk];
         }
 
+        //TODO: is this var even useable? populateObject() also seems dead.
+        /** @var array<string, object> $hydrationChain */
+        $hydrationChain = [];
+
         // related objects added using with()
         foreach ($this->getWith() as $modelWith) {
             [$endObject, $col] = $modelWith->getTableMap()->populateObject($row, $col, $this->getDataFetcher()->getIndexType());
@@ -146,7 +151,7 @@ class ObjectFormatter extends AbstractFormatter
 
             if ($modelWith->isPrimary()) {
                 $startObject = $obj;
-            } elseif (isset($hydrationChain)) {
+            } elseif ($hydrationChain && !empty($hydrationChain[$modelWith->getLeftPhpName()])) {
                 $startObject = $hydrationChain[$modelWith->getLeftPhpName()];
             } else {
                 continue;
@@ -162,11 +167,8 @@ class ObjectFormatter extends AbstractFormatter
 
                 continue;
             }
-            if (isset($hydrationChain)) {
-                $hydrationChain[$modelWith->getRightPhpName()] = $endObject;
-            } else {
-                $hydrationChain = [$modelWith->getRightPhpName() => $endObject];
-            }
+
+            $hydrationChain[$modelWith->getRightPhpName()] = $endObject;
 
             $relationMethod = $modelWith->getRelationMethod();
             $startObject->$relationMethod($endObject);

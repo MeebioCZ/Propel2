@@ -22,7 +22,7 @@ class InsertQuerySqlBuilder extends AbstractSqlQueryBuilder
      */
     public static function createInsertSql(Criteria $criteria): PreparedStatementDto
     {
-        $builder = new InsertQuerySqlBuilder($criteria);
+        $builder = new self($criteria);
 
         return $builder->build();
     }
@@ -35,7 +35,7 @@ class InsertQuerySqlBuilder extends AbstractSqlQueryBuilder
     public function build(): PreparedStatementDto
     {
         $qualifiedColumnNames = $this->criteria->keys();
-        if (empty($qualifiedColumnNames)) {
+        if (!$qualifiedColumnNames) {
             throw new PropelException('Database insert attempted without anything specified to insert.');
         }
 
@@ -54,7 +54,7 @@ class InsertQuerySqlBuilder extends AbstractSqlQueryBuilder
     }
 
     /**
-     * @param string[] $qualifiedColumnNames
+     * @param array<string> $qualifiedColumnNames
      *
      * @return string
      */

@@ -10,12 +10,17 @@ namespace Propel\Runtime\ActiveQuery;
 
 use ArrayIterator;
 use IteratorAggregate;
+use Propel\Runtime\ActiveQuery\Exception\UnknownModelException;
 use Propel\Runtime\Exception\InvalidArgumentException;
 use Propel\Runtime\Exception\LogicException;
 use Propel\Runtime\Formatter\AbstractFormatter;
+use Propel\Runtime\Map\TableMap;
 use Propel\Runtime\Propel;
 use Traversable;
 
+/**
+ * @implements \IteratorAggregate<(int|string), mixed>
+ */
 class BaseModelCriteria extends Criteria implements IteratorAggregate
 {
     /**
@@ -65,11 +70,11 @@ class BaseModelCriteria extends Criteria implements IteratorAggregate
      * Creates a new instance with the default capacity which corresponds to
      * the specified database.
      *
-     * @param string|null $dbName The dabase name
+     * @param string|null $dbName The database name
      * @param string|null $modelName The phpName of a model, e.g. 'Book'
      * @param string|null $modelAlias The alias for the model in this query, e.g. 'b'
      */
-    public function __construct($dbName = null, $modelName = null, $modelAlias = null)
+    public function __construct(?string $dbName = null, ?string $modelName = null, ?string $modelAlias = null)
     {
         parent::__construct($dbName);
         $this->setModelName($modelName);
@@ -82,9 +87,9 @@ class BaseModelCriteria extends Criteria implements IteratorAggregate
      *
      * @see with()
      *
-     * @return \Propel\Runtime\ActiveQuery\ModelWith[]
+     * @return array<\Propel\Runtime\ActiveQuery\ModelWith>
      */
-    public function getWith()
+    public function getWith(): array
     {
         return $this->with;
     }
@@ -97,7 +102,7 @@ class BaseModelCriteria extends Criteria implements IteratorAggregate
      *
      * @return $this The current object, for fluid interface
      */
-    public function setWith($with)
+    public function setWith(array $with)
     {
         $this->with = $with;
 
@@ -112,7 +117,7 @@ class BaseModelCriteria extends Criteria implements IteratorAggregate
      * $c->setFormatter(ModelCriteria::FORMAT_ARRAY);
      * </code>
      *
-     * @param string|\Propel\Runtime\Formatter\AbstractFormatter $formatter a formatter class name, or a formatter instance
+     * @param \Propel\Runtime\Formatter\AbstractFormatter|string $formatter a formatter class name, or a formatter instance
      *
      * @throws \Propel\Runtime\Exception\InvalidArgumentException
      *
@@ -139,7 +144,7 @@ class BaseModelCriteria extends Criteria implements IteratorAggregate
      *
      * @return \Propel\Runtime\Formatter\AbstractFormatter
      */
-    public function getFormatter()
+    public function getFormatter(): AbstractFormatter
     {
         if ($this->formatter === null) {
             $formatterClass = $this->defaultFormatterClass;
@@ -152,11 +157,29 @@ class BaseModelCriteria extends Criteria implements IteratorAggregate
     /**
      * Returns the name of the class for this model criteria
      *
-     * @return string
+     * @return string|null
      */
-    public function getModelName()
+    public function getModelName(): ?string
     {
         return $this->modelName;
+    }
+
+    /**
+     * Returns the name of the class for this model criteria
+     *
+     * @throws \Propel\Runtime\Exception\LogicException
+     *
+     * @return string
+     */
+    public function getModelNameOrFail(): string
+    {
+        $modelName = $this->getModelName();
+
+        if ($modelName === null) {
+            throw new LogicException('Model name is not defined.');
+        }
+
+        return $modelName;
     }
 
     /**
@@ -165,17 +188,24 @@ class BaseModelCriteria extends Criteria implements IteratorAggregate
      *
      * @param string|null $modelName
      *
+     * @throws \Propel\Runtime\ActiveQuery\Exception\UnknownModelException
+     *
      * @return $this The current object, for fluid interface
      */
-    public function setModelName($modelName)
+    public function setModelName(?string $modelName)
     {
-        if (empty($modelName)) {
+        if (!$modelName) {
             $this->modelName = null;
 
             return $this;
         }
         if (strpos($modelName, '\\') === 0) {
+            /** @var string $modelName */
             $modelName = substr($modelName, 1);
+        }
+
+        if (!class_exists($modelName)) {
+            throw new UnknownModelException('Cannot find model class ' . $modelName);
         }
 
         $this->modelName = $modelName;
@@ -192,7 +222,7 @@ class BaseModelCriteria extends Criteria implements IteratorAggregate
     /**
      * @return string
      */
-    public function getFullyQualifiedModelName()
+    public function getFullyQualifiedModelName(): string
     {
         return '\\' . $this->getModelName();
     }
@@ -205,7 +235,7 @@ class BaseModelCriteria extends Criteria implements IteratorAggregate
      *
      * @return $this The current object, for fluid interface
      */
-    public function setModelAlias($modelAlias, $useAliasInSQL = false)
+    public function setModelAlias(string $modelAlias, bool $useAliasInSQL = false)
     {
         if ($useAliasInSQL) {
             $this->addAlias($modelAlias, $this->tableMap->getName());
@@ -220,9 +250,9 @@ class BaseModelCriteria extends Criteria implements IteratorAggregate
     /**
      * Returns the alias of the main class for this model criteria
      *
-     * @return string The model alias
+     * @return string|null The model alias
      */
-    public function getModelAlias()
+    public function getModelAlias(): ?string
     {
         return $this->modelAlias;
     }
@@ -230,11 +260,11 @@ class BaseModelCriteria extends Criteria implements IteratorAggregate
     /**
      * Return the string to use in a clause as a model prefix for the main model
      *
-     * @return string The model alias if it exists, the model name if not
+     * @return string|null The model alias if it exists, the model name if not
      */
-    public function getModelAliasOrName()
+    public function getModelAliasOrName(): ?string
     {
-        return $this->modelAlias ? $this->modelAlias : $this->modelName;
+        return $this->modelAlias ?: $this->modelName;
     }
 
     /**
@@ -242,9 +272,9 @@ class BaseModelCriteria extends Criteria implements IteratorAggregate
      *
      * @return string The short model name
      */
-    public function getModelShortName()
+    public function getModelShortName(): string
     {
-        return static::getShortName($this->modelName);
+        return static::getShortName($this->modelName ?: '');
     }
 
     /**
@@ -254,7 +284,7 @@ class BaseModelCriteria extends Criteria implements IteratorAggregate
      *
      * @return string The short class name
      */
-    public static function getShortName($fullyQualifiedClassName)
+    public static function getShortName(string $fullyQualifiedClassName): string
     {
         $namespaceParts = explode('\\', $fullyQualifiedClassName);
 
@@ -264,11 +294,29 @@ class BaseModelCriteria extends Criteria implements IteratorAggregate
     /**
      * Returns the TableMap object for this Criteria
      *
-     * @return \Propel\Runtime\Map\TableMap
+     * @return \Propel\Runtime\Map\TableMap|null
      */
-    public function getTableMap()
+    public function getTableMap(): ?TableMap
     {
         return $this->tableMap;
+    }
+
+    /**
+     * Returns the TableMap object for this Criteria
+     *
+     * @throws \Propel\Runtime\Exception\LogicException
+     *
+     * @return \Propel\Runtime\Map\TableMap
+     */
+    public function getTableMapOrFail(): TableMap
+    {
+        $tableMap = $this->getTableMap();
+
+        if ($tableMap === null) {
+            throw new LogicException('Table map is not defined.');
+        }
+
+        return $tableMap;
     }
 
     /**
@@ -276,9 +324,9 @@ class BaseModelCriteria extends Criteria implements IteratorAggregate
      *
      * Either the SQL name or an alias.
      *
-     * @return string
+     * @return string|null
      */
-    public function getTableNameInQuery()
+    public function getTableNameInQuery(): ?string
     {
         if ($this->useAliasInSQL && $this->modelAlias) {
             return $this->modelAlias;
@@ -298,7 +346,7 @@ class BaseModelCriteria extends Criteria implements IteratorAggregate
      *
      * @return \Traversable
      */
-    public function getIterator()
+    public function getIterator(): Traversable
     {
         $res = $this->find(null); // use the default connection
         if ($res instanceof IteratorAggregate) {

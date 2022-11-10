@@ -36,7 +36,7 @@ class SqliteSchemaParser extends AbstractSchemaParser
      * There really aren't any SQLite native types, so we're just
      * using the MySQL ones here.
      *
-     * @var string[]
+     * @var array<string>
      */
     private static $sqliteTypeMap = [
         'tinyint' => PropelTypes::TINYINT,
@@ -56,7 +56,7 @@ class SqliteSchemaParser extends AbstractSchemaParser
         'date' => PropelTypes::DATE,
         'time' => PropelTypes::TIME,
         'year' => PropelTypes::INTEGER,
-        'datetime' => PropelTypes::DATE,
+        'datetime' => PropelTypes::DATETIME,
         'timestamp' => PropelTypes::TIMESTAMP,
         'tinyblob' => PropelTypes::BINARY,
         'blob' => PropelTypes::BLOB,
@@ -73,20 +73,20 @@ class SqliteSchemaParser extends AbstractSchemaParser
     /**
      * Gets a type mapping from native types to Propel types
      *
-     * @return string[]
+     * @return array<string>
      */
-    protected function getTypeMapping()
+    protected function getTypeMapping(): array
     {
         return self::$sqliteTypeMap;
     }
 
     /**
      * @param \Propel\Generator\Model\Database $database
-     * @param \Propel\Generator\Model\Table[] $additionalTables
+     * @param array<\Propel\Generator\Model\Table> $additionalTables
      *
      * @return int
      */
-    public function parse(Database $database, array $additionalTables = [])
+    public function parse(Database $database, array $additionalTables = []): int
     {
         if ($this->getGeneratorConfig()) {
             $this->addVendorInfo = $this->getGeneratorConfig()->get()['migrations']['addVendorInfo'];
@@ -118,7 +118,7 @@ class SqliteSchemaParser extends AbstractSchemaParser
      *
      * @return void
      */
-    protected function parseTables(Database $database, ?Table $filterTable = null)
+    protected function parseTables(Database $database, ?Table $filterTable = null): void
     {
         $sql = "
         SELECT name
@@ -188,7 +188,7 @@ class SqliteSchemaParser extends AbstractSchemaParser
      *
      * @return void
      */
-    protected function addColumns(Table $table)
+    protected function addColumns(Table $table): void
     {
         $tableName = $table->getName();
 
@@ -276,7 +276,7 @@ class SqliteSchemaParser extends AbstractSchemaParser
      *
      * @return void
      */
-    protected function addForeignKeys(Table $table)
+    protected function addForeignKeys(Table $table): void
     {
         $database = $table->getDatabase();
 
@@ -327,7 +327,7 @@ class SqliteSchemaParser extends AbstractSchemaParser
      *
      * @return void
      */
-    protected function addIndexes(Table $table)
+    protected function addIndexes(Table $table): void
     {
         /** @var \PDOStatement $stmt */
         $stmt = $this->dbh->query('PRAGMA index_list("' . $table->getName() . '")');

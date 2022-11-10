@@ -19,9 +19,19 @@ use Symfony\Component\Console\Output\OutputInterface;
  */
 class DataDictionaryExportCommand extends AbstractCommand
 {
+    /**
+     * @var string
+     */
     public const DEFAULT_OUTPUT_DIRECTORY = 'generated-datadictionary';
 
+    /**
+     * @var string
+     */
     protected const OPTION_OUTPUT_DIR = 'output-dir';
+
+    /**
+     * @var string
+     */
     protected const OPTION_SCHEMA_DIR = 'schema-dir';
 
     /**
@@ -69,7 +79,7 @@ class DataDictionaryExportCommand extends AbstractCommand
         $recursive = $generatorConfig->getConfigProperty('generator.recursive');
         $schemas = $this->getSchemas($schemaDir, $recursive);
         $manager->setSchemas($schemas);
-        $manager->setLoggerClosure(function ($message) use ($input, $output) {
+        $manager->setLoggerClosure(function ($message) use ($input, $output): void {
             if ($input->getOption('verbose')) {
                 $output->writeln($message);
             }

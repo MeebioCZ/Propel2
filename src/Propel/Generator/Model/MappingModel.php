@@ -27,7 +27,7 @@ abstract class MappingModel implements MappingModelInterface
     /**
      * The list of vendor's information.
      *
-     * @var \Propel\Generator\Model\VendorInfo[]
+     * @var array<\Propel\Generator\Model\VendorInfo>
      */
     protected $vendorInfos = [];
 
@@ -38,7 +38,7 @@ abstract class MappingModel implements MappingModelInterface
      *
      * @return void
      */
-    public function loadMapping(array $attributes)
+    public function loadMapping(array $attributes): void
     {
         $this->attributes = array_change_key_case($attributes, CASE_LOWER);
         $this->setupObject();
@@ -51,7 +51,7 @@ abstract class MappingModel implements MappingModelInterface
      *
      * @return void
      */
-    abstract protected function setupObject();
+    abstract protected function setupObject(): void;
 
     /**
      * Returns all definition attributes.
@@ -60,7 +60,7 @@ abstract class MappingModel implements MappingModelInterface
      *
      * @return array
      */
-    public function getAttributes()
+    public function getAttributes(): array
     {
         return $this->attributes;
     }
@@ -76,7 +76,7 @@ abstract class MappingModel implements MappingModelInterface
      *
      * @return mixed
      */
-    public function getAttribute($name, $default = null)
+    public function getAttribute(string $name, $default = null)
     {
         $name = strtolower($name);
         if (isset($this->attributes[$name])) {
@@ -87,7 +87,7 @@ abstract class MappingModel implements MappingModelInterface
     }
 
     /**
-     * Converts a value (Boolean, string or numeric) into a Boolean value.
+     * Converts a value (Boolean, string or numeric) into a boolean value.
      *
      * This is to support the default value when used with a boolean column.
      *
@@ -95,7 +95,7 @@ abstract class MappingModel implements MappingModelInterface
      *
      * @return bool
      */
-    protected function booleanValue($value)
+    protected function booleanValue($value): bool
     {
         if (is_bool($value)) {
             return $value;
@@ -105,7 +105,11 @@ abstract class MappingModel implements MappingModelInterface
             return (bool)$value;
         }
 
-        return in_array(strtolower($value), [ 'true', 't', 'y', 'yes' ], true);
+        if ($value === null) {
+            return false;
+        }
+
+        return in_array(strtolower($value), ['true', 't', 'y', 'yes'], true);
     }
 
     /**
@@ -113,11 +117,11 @@ abstract class MappingModel implements MappingModelInterface
      *
      * @return string|null
      */
-    protected function getDefaultValueForArray($stringValue)
+    protected function getDefaultValueForArray(string $stringValue): ?string
     {
         $stringValue = trim($stringValue);
 
-        if (empty($stringValue)) {
+        if (!$stringValue) {
             return null;
         }
 
@@ -127,7 +131,7 @@ abstract class MappingModel implements MappingModelInterface
         }
 
         $value = implode(' | ', $values);
-        if (empty($value) || $value === ' | ') {
+        if ($value === ' | ') {
             return null;
         }
 
@@ -141,11 +145,11 @@ abstract class MappingModel implements MappingModelInterface
      *
      * @return array|null
      */
-    protected function getDefaultValueForSet($stringValue)
+    protected function getDefaultValueForSet(string $stringValue): ?array
     {
         $stringValue = trim($stringValue);
 
-        if (empty($stringValue)) {
+        if (!$stringValue) {
             return null;
         }
 
@@ -164,7 +168,7 @@ abstract class MappingModel implements MappingModelInterface
      *
      * @return \Propel\Generator\Model\VendorInfo
      */
-    public function addVendorInfo($vendor)
+    public function addVendorInfo($vendor): VendorInfo
     {
         if ($vendor instanceof VendorInfo) {
             $this->vendorInfos[$vendor->getType()] = $vendor;
@@ -185,7 +189,7 @@ abstract class MappingModel implements MappingModelInterface
      *
      * @return \Propel\Generator\Model\VendorInfo
      */
-    public function getVendorInfoForType($type)
+    public function getVendorInfoForType(string $type): VendorInfo
     {
         if (isset($this->vendorInfos[$type])) {
             return $this->vendorInfos[$type];
@@ -197,9 +201,9 @@ abstract class MappingModel implements MappingModelInterface
     /**
      * Returns the list of all vendor information.
      *
-     * @return \Propel\Generator\Model\VendorInfo[]
+     * @return array<\Propel\Generator\Model\VendorInfo>
      */
-    public function getVendorInformation()
+    public function getVendorInformation(): array
     {
         return $this->vendorInfos;
     }

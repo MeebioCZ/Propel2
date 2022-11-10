@@ -12,6 +12,7 @@ use Propel\Runtime\ActiveQuery\BaseModelCriteria;
 use Propel\Runtime\ActiveRecord\ActiveRecordInterface;
 use Propel\Runtime\DataFetcher\DataFetcherInterface;
 use Propel\Runtime\Exception\PropelException;
+use Propel\Runtime\Map\TableMap;
 use Propel\Runtime\Propel;
 
 /**
@@ -37,7 +38,7 @@ abstract class AbstractFormatter
     protected $tableMap;
 
     /**
-     * @var \Propel\Runtime\ActiveQuery\ModelWith[] $with
+     * @var array<\Propel\Runtime\ActiveQuery\ModelWith>
      */
     protected $with = [];
 
@@ -52,7 +53,7 @@ abstract class AbstractFormatter
     protected $hasLimit = false;
 
     /**
-     * @var \Propel\Runtime\ActiveRecord\ActiveRecordInterface[]
+     * @var array<\Propel\Runtime\ActiveRecord\ActiveRecordInterface>
      */
     protected $currentObjects = [];
 
@@ -79,7 +80,7 @@ abstract class AbstractFormatter
      *
      * @return void
      */
-    public function setDataFetcher(DataFetcherInterface $dataFetcher)
+    public function setDataFetcher(DataFetcherInterface $dataFetcher): void
     {
         $this->dataFetcher = $dataFetcher;
     }
@@ -89,7 +90,7 @@ abstract class AbstractFormatter
      *
      * @return \Propel\Runtime\DataFetcher\DataFetcherInterface
      */
-    public function getDataFetcher()
+    public function getDataFetcher(): DataFetcherInterface
     {
         return $this->dataFetcher;
     }
@@ -124,15 +125,15 @@ abstract class AbstractFormatter
      *
      * @return void
      */
-    public function setDbName($dbName)
+    public function setDbName(string $dbName): void
     {
         $this->dbName = $dbName;
     }
 
     /**
-     * @return string
+     * @return string|null
      */
-    public function getDbName()
+    public function getDbName(): ?string
     {
         return $this->dbName;
     }
@@ -142,7 +143,7 @@ abstract class AbstractFormatter
      *
      * @return void
      */
-    public function setClass($class)
+    public function setClass(string $class): void
     {
         $this->class = $class;
         $this->tableMap = $class::TABLE_MAP;
@@ -151,7 +152,7 @@ abstract class AbstractFormatter
     /**
      * @return string|null
      */
-    public function getClass()
+    public function getClass(): ?string
     {
         return $this->class;
     }
@@ -161,15 +162,15 @@ abstract class AbstractFormatter
      *
      * @return void
      */
-    public function setWith($withs = [])
+    public function setWith(array $withs = []): void
     {
         $this->with = $withs;
     }
 
     /**
-     * @return \Propel\Runtime\ActiveQuery\ModelWith[]
+     * @return array<\Propel\Runtime\ActiveQuery\ModelWith>
      */
-    public function getWith()
+    public function getWith(): array
     {
         return $this->with;
     }
@@ -179,7 +180,7 @@ abstract class AbstractFormatter
      *
      * @return void
      */
-    public function setAsColumns($asColumns = [])
+    public function setAsColumns(array $asColumns = []): void
     {
         $this->asColumns = $asColumns;
     }
@@ -187,7 +188,7 @@ abstract class AbstractFormatter
     /**
      * @return array
      */
-    public function getAsColumns()
+    public function getAsColumns(): array
     {
         return $this->asColumns;
     }
@@ -197,7 +198,7 @@ abstract class AbstractFormatter
      *
      * @return void
      */
-    public function setHasLimit($hasLimit = false)
+    public function setHasLimit(bool $hasLimit = false): void
     {
         $this->hasLimit = $hasLimit;
     }
@@ -205,7 +206,7 @@ abstract class AbstractFormatter
     /**
      * @return bool
      */
-    public function hasLimit()
+    public function hasLimit(): bool
     {
         return $this->hasLimit;
     }
@@ -235,7 +236,7 @@ abstract class AbstractFormatter
      *
      * @return string|null
      */
-    public function getCollectionClassName()
+    public function getCollectionClassName(): ?string
     {
         return null;
     }
@@ -245,7 +246,7 @@ abstract class AbstractFormatter
      *
      * @param \Propel\Runtime\ActiveRecord\ActiveRecordInterface|null $record the object to format
      *
-     * @return \Propel\Runtime\ActiveRecord\ActiveRecordInterface The original record
+     * @return mixed The original record
      */
     public function formatRecord(?ActiveRecordInterface $record = null)
     {
@@ -269,14 +270,14 @@ abstract class AbstractFormatter
     /**
      * @return bool
      */
-    abstract public function isObjectFormatter();
+    abstract public function isObjectFormatter(): bool;
 
     /**
      * @throws \Propel\Runtime\Exception\PropelException
      *
      * @return void
      */
-    public function checkInit()
+    public function checkInit(): void
     {
         if ($this->tableMap === null) {
             throw new PropelException('You must initialize a formatter object before calling format() or formatOne()');
@@ -286,7 +287,7 @@ abstract class AbstractFormatter
     /**
      * @return \Propel\Runtime\Map\TableMap
      */
-    public function getTableMap()
+    public function getTableMap(): TableMap
     {
         return Propel::getServiceContainer()->getDatabaseMap($this->dbName)->getTableByPhpName($this->class);
     }
@@ -294,7 +295,7 @@ abstract class AbstractFormatter
     /**
      * @return bool
      */
-    protected function isWithOneToMany()
+    protected function isWithOneToMany(): bool
     {
         foreach ($this->with as $modelWith) {
             if ($modelWith->isWithOneToMany()) {
@@ -315,11 +316,12 @@ abstract class AbstractFormatter
      *
      * @return \Propel\Runtime\ActiveRecord\ActiveRecordInterface
      */
-    public function getSingleObjectFromRow($row, $class, &$col = 0)
+    public function getSingleObjectFromRow(array $row, string $class, int &$col = 0): ActiveRecordInterface
     {
         $obj = new $class();
         $col = $obj->hydrate($row, $col, false, $this->getDataFetcher()->getIndexType());
 
+        /** @phpstan-var \Propel\Runtime\ActiveRecord\ActiveRecordInterface */
         return $obj;
     }
 }

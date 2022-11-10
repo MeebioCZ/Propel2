@@ -8,7 +8,10 @@
 
 namespace Propel\Generator\Behavior\AggregateColumn;
 
+use Propel\Generator\Builder\Om\AbstractOMBuilder;
 use Propel\Generator\Model\Behavior;
+use Propel\Generator\Model\ForeignKey;
+use Propel\Generator\Model\Table;
 
 /**
  * Keeps an aggregate column updated with related table
@@ -20,7 +23,7 @@ class AggregateColumnRelationBehavior extends Behavior
     /**
      * Default parameters value
      *
-     * @var string[]
+     * @var array<string, mixed>
      */
     protected $parameters = [
         'foreign_table' => '',
@@ -31,7 +34,7 @@ class AggregateColumnRelationBehavior extends Behavior
     /**
      * @return bool
      */
-    public function allowMultiple()
+    public function allowMultiple(): bool
     {
         return true;
     }
@@ -41,7 +44,7 @@ class AggregateColumnRelationBehavior extends Behavior
      *
      * @return string
      */
-    public function postSave($builder)
+    public function postSave(AbstractOMBuilder $builder): string
     {
         $relationName = $this->getRelationName($builder);
         $aggregateName = $this->getParameter('aggregate_name');
@@ -57,7 +60,7 @@ class AggregateColumnRelationBehavior extends Behavior
      *
      * @return string
      */
-    public function objectAttributes($builder)
+    public function objectAttributes(AbstractOMBuilder $builder): string
     {
         $relationName = $this->getRelationName($builder);
         $relatedClass = $builder->getClassNameFromBuilder($builder->getNewStubObjectBuilder($this->getForeignTable()));
@@ -75,7 +78,7 @@ protected \$old{$relationName}{$aggregateName};
      *
      * @return string
      */
-    public function objectMethods($builder)
+    public function objectMethods(AbstractOMBuilder $builder): string
     {
         return $this->addObjectUpdateRelated($builder);
     }
@@ -85,7 +88,7 @@ protected \$old{$relationName}{$aggregateName};
      *
      * @return string
      */
-    protected function addObjectUpdateRelated($builder)
+    protected function addObjectUpdateRelated(AbstractOMBuilder $builder): string
     {
         $relationName = $this->getRelationName($builder);
 
@@ -103,7 +106,7 @@ protected \$old{$relationName}{$aggregateName};
      *
      * @return void
      */
-    public function objectFilter(&$script, $builder)
+    public function objectFilter(string &$script, AbstractOMBuilder $builder): void
     {
         $relationName = $this->getRelationName($builder);
         $aggregateName = $this->getParameter('aggregate_name');
@@ -123,7 +126,7 @@ protected \$old{$relationName}{$aggregateName};
      *
      * @return string
      */
-    public function preUpdateQuery($builder)
+    public function preUpdateQuery(AbstractOMBuilder $builder): string
     {
         return $this->getFindRelated($builder);
     }
@@ -133,7 +136,7 @@ protected \$old{$relationName}{$aggregateName};
      *
      * @return string
      */
-    public function preDeleteQuery($builder)
+    public function preDeleteQuery(AbstractOMBuilder $builder): string
     {
         return $this->getFindRelated($builder);
     }
@@ -143,7 +146,7 @@ protected \$old{$relationName}{$aggregateName};
      *
      * @return string
      */
-    protected function getFindRelated($builder)
+    protected function getFindRelated(AbstractOMBuilder $builder): string
     {
         $relationName = $this->getRelationName($builder);
         $aggregateName = $this->getParameter('aggregate_name');
@@ -156,7 +159,7 @@ protected \$old{$relationName}{$aggregateName};
      *
      * @return string
      */
-    public function postUpdateQuery($builder)
+    public function postUpdateQuery(AbstractOMBuilder $builder): string
     {
         return $this->getUpdateRelated($builder);
     }
@@ -166,7 +169,7 @@ protected \$old{$relationName}{$aggregateName};
      *
      * @return string
      */
-    public function postDeleteQuery($builder)
+    public function postDeleteQuery(AbstractOMBuilder $builder): string
     {
         return $this->getUpdateRelated($builder);
     }
@@ -176,7 +179,7 @@ protected \$old{$relationName}{$aggregateName};
      *
      * @return string
      */
-    protected function getUpdateRelated($builder)
+    protected function getUpdateRelated(AbstractOMBuilder $builder): string
     {
         $relationName = $this->getRelationName($builder);
         $aggregateName = $this->getParameter('aggregate_name');
@@ -189,7 +192,7 @@ protected \$old{$relationName}{$aggregateName};
      *
      * @return string
      */
-    public function queryMethods($builder)
+    public function queryMethods(AbstractOMBuilder $builder): string
     {
         $script = '';
 
@@ -204,7 +207,7 @@ protected \$old{$relationName}{$aggregateName};
      *
      * @return string
      */
-    protected function addQueryFindRelated($builder)
+    protected function addQueryFindRelated(AbstractOMBuilder $builder): string
     {
         $foreignKey = $this->getForeignKey();
         $foreignQueryBuilder = $builder->getNewStubQueryBuilder($foreignKey->getForeignTable());
@@ -212,7 +215,7 @@ protected \$old{$relationName}{$aggregateName};
 
         $builder->declareClassNamespace(
             $foreignKey->getForeignTable()->getPhpName() . 'Query',
-            $foreignKey->getForeignTable()->getNamespace()
+            $foreignKey->getForeignTable()->getNamespace(),
         );
 
         return $this->renderTemplate('queryFindRelated', [
@@ -230,7 +233,7 @@ protected \$old{$relationName}{$aggregateName};
      *
      * @return string
      */
-    protected function addQueryUpdateRelated($builder)
+    protected function addQueryUpdateRelated(AbstractOMBuilder $builder): string
     {
         $relationName = $this->getRelationName($builder);
 
@@ -245,7 +248,7 @@ protected \$old{$relationName}{$aggregateName};
     /**
      * @return \Propel\Generator\Model\Table|null
      */
-    protected function getForeignTable()
+    protected function getForeignTable(): ?Table
     {
         return $this->getTable()->getDatabase()->getTable($this->getParameter('foreign_table'));
     }
@@ -253,7 +256,7 @@ protected \$old{$relationName}{$aggregateName};
     /**
      * @return \Propel\Generator\Model\ForeignKey
      */
-    protected function getForeignKey()
+    protected function getForeignKey(): ForeignKey
     {
         $foreignTable = $this->getForeignTable();
         // let's infer the relation from the foreign table
@@ -268,7 +271,7 @@ protected \$old{$relationName}{$aggregateName};
      *
      * @return string
      */
-    protected function getRelationName($builder)
+    protected function getRelationName(AbstractOMBuilder $builder): string
     {
         return $builder->getFKPhpNameAffix($this->getForeignKey());
     }

@@ -42,7 +42,7 @@ class PropelDateTime extends DateTime
      *
      * @return bool
      */
-    protected static function isTimestamp($value)
+    protected static function isTimestamp($value): bool
     {
         if (!is_numeric($value)) {
             return false;
@@ -72,7 +72,7 @@ class PropelDateTime extends DateTime
      *
      * @return \DateTime
      */
-    public static function createHighPrecision($time = null)
+    public static function createHighPrecision(?bool $time = null): DateTime
     {
         $dateTime = DateTime::createFromFormat('U.u', $time ?: self::getMicrotime());
 
@@ -87,7 +87,7 @@ class PropelDateTime extends DateTime
      *
      * @return string
      */
-    public static function getMicrotime()
+    public static function getMicrotime(): string
     {
         $mtime = microtime(true);
 
@@ -105,12 +105,12 @@ class PropelDateTime extends DateTime
      *
      * @return mixed|null An instance of $dateTimeClass
      */
-    public static function newInstance($value, ?DateTimeZone $timeZone = null, $dateTimeClass = 'DateTime')
+    public static function newInstance($value, ?DateTimeZone $timeZone = null, string $dateTimeClass = 'DateTime')
     {
         if ($value instanceof DateTimeInterface) {
             return $value;
         }
-        if (empty($value)) {
+        if (!$value) {
             // '' is seen as NULL for temporal objects
             // because DateTime('') == DateTime('now') -- which is unexpected
             return null;
@@ -147,9 +147,9 @@ class PropelDateTime extends DateTime
      * Sets an internal property with the date string and returns properties
      * of class that should be serialized.
      *
-     * @return string[]
+     * @return array<string>
      */
-    public function __sleep()
+    public function __sleep(): array
     {
         // We need to use a string without a time zone, due to
         // PHP bug: http://bugs.php.net/bug.php?id=40743
@@ -165,7 +165,7 @@ class PropelDateTime extends DateTime
      *
      * @return void
      */
-    public function __wakeup()
+    public function __wakeup(): void
     {
         // @TODO I don't think we can call the constructor from within this method
         parent::__construct($this->dateString, new DateTimeZone($this->tzString));

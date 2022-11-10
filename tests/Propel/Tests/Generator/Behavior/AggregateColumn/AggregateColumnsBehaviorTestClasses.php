@@ -19,7 +19,7 @@ class TestableComment extends AggregateComment
 {
     // overrides the parent save() to bypass behavior hooks
 
-    public function save(?ConnectionInterface $con = null)
+    public function save(?ConnectionInterface $con = null): int
     {
         $con->beginTransaction();
         try {
@@ -39,7 +39,7 @@ class TestableComment extends AggregateComment
     /**
      * @return void
      */
-    public function delete(?ConnectionInterface $con = null)
+    public function delete(?ConnectionInterface $con = null): void
     {
         $con->beginTransaction();
         try {
@@ -58,20 +58,20 @@ class TestableComment extends AggregateComment
 
 class TestableAggregateCommentQuery extends AggregateCommentQuery
 {
-    public static function create($modelAlias = null, ?Criteria $criteria = null)
+    public static function create(?string $modelAlias = null, ?Criteria $criteria = null): Criteria
     {
         return new TestableAggregateCommentQuery();
     }
 
     // overrides the parent basePreDelete() to bypass behavior hooks
 
-    protected function basePreDelete(ConnectionInterface $con)
+    protected function basePreDelete(ConnectionInterface $con): ?int
     {
         return $this->preDelete($con);
     }
 
     // overrides the parent basePostDelete() to bypass behavior hooks
-    protected function basePostDelete($affectedRows, ConnectionInterface $con)
+    protected function basePostDelete(int $affectedRows, ConnectionInterface $con): ?int
     {
         return $this->postDelete($affectedRows, $con);
     }
