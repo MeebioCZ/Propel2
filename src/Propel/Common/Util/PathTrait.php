@@ -37,7 +37,7 @@ trait PathTrait
         $srcPos = strrpos($path, DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR);
         if ($srcPos === false) {
             // BC shim for old template paths
-            $path .= 'templates' . DIRECTORY_SEPARATOR;
+            $path .= '/templates' . DIRECTORY_SEPARATOR;
             if (is_dir($path)) {
                 trigger_error(sprintf('Deprecated template path `%s`, use `ROOT/templates/` instead.', $path), E_USER_DEPRECATED);
 
