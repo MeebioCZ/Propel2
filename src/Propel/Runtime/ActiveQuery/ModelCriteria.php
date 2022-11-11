@@ -511,7 +511,9 @@ class ModelCriteria extends BaseModelCriteria
         if (!is_array($columnArray)) {
             $columnArray = [$columnArray];
         }
+
         $this->select = $columnArray;
+        $this->selectColumns = $columnArray;
         $this->isSelfSelected = true;
 
         return $this;
