@@ -417,7 +417,7 @@ public function doCount(?ConnectionInterface \$con = null): \Propel\Runtime\Data
     protected function addGetParams(&$script)
     {
         $script .= "
-            public function getParams()
+            public function getParams(): array
                 {
                     \$params = [];
                     \$dbMap = Propel::getServiceContainer()->getDatabaseMap(\$this->getDbName());
