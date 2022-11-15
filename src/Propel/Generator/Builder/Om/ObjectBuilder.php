@@ -6263,7 +6263,7 @@ abstract class " . $this->getUnqualifiedClassName() . $parentClass . ' implement
             $getterRemoveObjectName = $this->getCrossRefFKRemoveObjectNames($crossFKs, $crossFK);
 
             $script .= "
-            if (\${$lowerRelatedObjectClassName}->is{$getterName}Loaded()) {
+            if (method_exists(\${$lowerRelatedObjectClassName}, 'is{$getterName}Loaded') && \${$lowerRelatedObjectClassName}->is{$getterName}Loaded()) {
                 //remove the back reference if available
                 \${$lowerRelatedObjectClassName}->get$getterName()->removeObject($getterRemoveObjectName);
             }\n";
