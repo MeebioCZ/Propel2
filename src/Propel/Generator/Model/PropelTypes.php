@@ -599,7 +599,7 @@ class PropelTypes
      */
     public static function isDateType($maapingType)
     {
-        return in_array($maapingType, [self::DATE, self::TIME, self::TIMESTAMP]);
+        return in_array($maapingType, [self::DATE, self::DATETIME, self::TIME, self::TIMESTAMP]);
     }
 
     /**

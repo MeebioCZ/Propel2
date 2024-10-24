@@ -1851,7 +1851,10 @@ abstract class " . $this->getUnqualifiedClassName() . $parentClass . ' implement
         }
 
         if ($column->isDateType()) {
-            $typeHint = '';
+            $typeHint = 'string|integer|\DateTimeInterface';
+            if (!$column->isNotNull()) {
+                $typeHint .= '|null';
+            }
         } elseif ($column->isBooleanType()) {
             $typeHint = $column->isNotNull() ? 'bool' : '?bool';
         } else {
