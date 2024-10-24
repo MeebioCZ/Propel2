@@ -1851,7 +1851,7 @@ abstract class " . $this->getUnqualifiedClassName() . $parentClass . ' implement
         }
 
         if ($column->isDateType()) {
-            $typeHint = 'string|integer|\DateTimeInterface';
+            $typeHint = 'string|int|\DateTimeInterface';
             if (!$column->isNotNull()) {
                 $typeHint .= '|null';
             }
