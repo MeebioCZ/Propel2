@@ -174,6 +174,7 @@
         <column name="enabled" type="BOOLEAN" default="true"/>
         <column name="not_enabled" type="BOOLEAN" default="false"/>
         <column name="created" type="TIMESTAMP" defaultExpr="CURRENT_TIMESTAMP"/>
+        <column name="updated" type="TIMESTAMP" defaultExpr="CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"/>
         <column name="role_id" type="INTEGER" required="false" default="null"/>
         <column name="authenticator" type="VARCHAR" size="32" defaultExpr="'Password'"/>
         <foreign-key foreignTable="bookstore_employee" onDelete="cascade">
@@ -322,6 +323,11 @@
         <foreign-key foreignTable="book" onDelete="setnull" phpName="Work">
             <reference local="prize_book_id" foreign="id"/>
         </foreign-key>
+        <!-- Add this unique constraint as a fallback -->
+        <unique>
+            <unique-column name="bookstore_id"/>
+            <unique-column name="contest_id"/>
+        </unique>
     </table>
 
     <table name="bookstore_contest_entry" reloadOnInsert="true">
@@ -347,6 +353,11 @@
         <column name="style" type="ENUM" valueSet="novel, essay, poetry"/>
         <column name="style2" type="SET" valueSet="novel, essay, poetry"/>
         <column name="tags" type="ARRAY"/>
+        <column name="uuid" required="false" type="UUID"/>
+        <column name="uuid_bin" required="false" type="UUID_BINARY"/>
+        <index>
+            <index-column name="uuid_bin"/>
+        </index>
     </table>
 
     <!-- Test single table inheritance with Abstract true -->

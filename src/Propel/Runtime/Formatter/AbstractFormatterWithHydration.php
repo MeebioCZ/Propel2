@@ -65,7 +65,7 @@ abstract class AbstractFormatterWithHydration extends AbstractFormatter
         $mainKey = $tableMap::getPrimaryKeyHashFromRow($row, 0, $indexType);
         // we hydrate the main object even in case of a one-to-many relationship
         // in order to get the $col variable increased anyway
-        $obj = $this->getSingleObjectFromRow($row, $this->class, $col);
+        $obj = $this->getSingleObjectFromRow($row, (string)$this->class, $col);
 
         if (!isset($this->alreadyHydratedObjects[$this->class][$mainKey])) {
             $this->alreadyHydratedObjects[$this->class][$mainKey] = $obj->toArray();
@@ -78,9 +78,11 @@ abstract class AbstractFormatterWithHydration extends AbstractFormatter
         foreach ($this->getWith() as $relAlias => $modelWith) {
             // determine class to use
             if ($modelWith->isSingleTableInheritance()) {
+                /** @var class-string<object>|object $class */
                 $class = $modelWith->getTableMap()::getOMClass($row, $col, false);
-                $refl = new ReflectionClass($class);
-                if ($refl->isAbstract()) {
+                $reflectionClass = new ReflectionClass($class);
+                $class = $reflectionClass->getName();
+                if ($reflectionClass->isAbstract()) {
                     $tableMapClass = "Map\\{$class}TableMap";
                     $col += $tableMapClass::NUM_COLUMNS;
 

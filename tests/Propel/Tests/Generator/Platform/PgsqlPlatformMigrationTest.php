@@ -14,15 +14,16 @@ use Propel\Generator\Model\ColumnDefaultValue;
 use Propel\Generator\Model\Diff\ColumnComparator;
 use Propel\Generator\Model\Table;
 use Propel\Generator\Platform\PgsqlPlatform;
+use Propel\Generator\Platform\PlatformInterface;
 
 class PgsqlPlatformMigrationTest extends PlatformMigrationTestProvider
 {
     /**
      * Get the Platform object for this class
      *
-     * @return \Propel\Generator\Platform\PlatformInterface
+     * @return \Propel\Generator\Platform\PgsqlPlatform
      */
-    protected function getPlatform()
+    protected function getPlatform(): PlatformInterface
     {
         return new PgsqlPlatform();
     }
@@ -97,6 +98,8 @@ DROP INDEX "bar_fk";
 ALTER TABLE "foo" RENAME COLUMN "bar" TO "bar1";
 
 ALTER TABLE "foo"
+
+  ALTER COLUMN "baz" SET DEFAULT 'pdf;jpg;png;doc;docx;xls;xlsx;txt',
 
   ALTER COLUMN "baz" DROP NOT NULL,
 
@@ -447,5 +450,39 @@ EOF;
     public function testGetModifyTableForeignKeysSkipSql4DDL($databaseDiff)
     {
         $this->assertFalse($databaseDiff);
+    }
+
+    /**
+     * @dataProvider providerForTestMigrateToUUIDColumn
+     *
+     * @return void
+     */
+    public function testMigrateToUUIDColumn($tableDiff)
+    {
+        $expected = <<<END
+
+ALTER TABLE "foo" ALTER COLUMN "id" TYPE uuid USING id::uuid;
+
+ALTER TABLE "foo" ALTER COLUMN "id" SET DEFAULT vendor_specific_uuid_generator_function();
+
+END;
+        $this->assertEquals($expected, $this->getPlatform()->getModifyTableColumnsDDL($tableDiff));
+    }
+
+    /**
+     * @dataProvider providerForTestMigrateToUuidBinColumn
+     *
+     * @return void
+     */
+    public function testMigrateToUuidBinColumn($tableDiff)
+    {
+        $expected = <<<END
+
+ALTER TABLE "foo" ALTER COLUMN "id" TYPE BYTEA USING NULL;
+
+ALTER TABLE "foo" ALTER COLUMN "id" SET DEFAULT vendor_specific_uuid_generator_function();
+
+END;
+        $this->assertEquals($expected, $this->getPlatform()->getModifyTableColumnsDDL($tableDiff));
     }
 }

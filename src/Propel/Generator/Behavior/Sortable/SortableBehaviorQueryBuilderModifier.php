@@ -166,8 +166,10 @@ static public function sortableApplyScopeCriteria(Criteria \$criteria, \$scope, 
 ";
             }
         } else {
+            /** @var string $scope */
+            $scope = current($this->behavior->getScopes());
             $script .= "
-    \$criteria->\$method({$this->tableMapClassName}::" . Column::CONSTANT_PREFIX . strtoupper(current($this->behavior->getScopes())) . ", \$scope, Criteria::EQUAL);
+    \$criteria->\$method({$this->tableMapClassName}::" . Column::CONSTANT_PREFIX . strtoupper($scope) . ", \$scope, Criteria::EQUAL);
 ";
         }
 
@@ -443,7 +445,7 @@ public function getMaxRank(" . ($useScope ? "$methodSignature, " : '') . "?Conne
  *
  * @return int|null Highest position
  */
-public function getMaxRankArray(" . ($useScope ? '$scope, ' : '') . "ConnectionInterface \$con = null): ?int
+public function getMaxRankArray(" . ($useScope ? '$scope, ' : '') . "?ConnectionInterface \$con = null): ?int
 {
     if (\$con === null) {
         \$con = Propel::getConnection({$this->tableMapClassName}::DATABASE_NAME);
@@ -527,7 +529,7 @@ public function reorder(\$order, ?ConnectionInterface \$con = null)
  *
  * @return {$this->objectClassName}
  */
-static public function retrieveByRank(\$rank, " . ($useScope ? '$scope = null, ' : '') . "ConnectionInterface \$con = null)
+static public function retrieveByRank(\$rank, " . ($useScope ? '$scope = null, ' : '') . "?ConnectionInterface \$con = null)
 {
     if (null === \$con) {
         \$con = Propel::getServiceContainer()->getReadConnection({$this->tableMapClassName}::DATABASE_NAME);
@@ -691,7 +693,7 @@ static public function deleteList(\$scope, ?ConnectionInterface \$con = null): i
         $script .= "
  * @param ConnectionInterface \$con Connection to use.
  */
-static public function sortableShiftRank(\$delta, \$first, \$last = null, " . ($useScope ? '$scope = null, ' : '') . "ConnectionInterface \$con = null)
+static public function sortableShiftRank(\$delta, \$first, \$last = null, " . ($useScope ? '$scope = null, ' : '') . "?ConnectionInterface \$con = null)
 {
     if (null === \$con) {
         \$con = Propel::getServiceContainer()->getWriteConnection({$this->tableMapClassName}::DATABASE_NAME);

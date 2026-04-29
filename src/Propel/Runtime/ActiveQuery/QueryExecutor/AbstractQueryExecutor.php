@@ -15,6 +15,7 @@ use Propel\Runtime\Connection\ConnectionWrapper;
 use Propel\Runtime\Connection\StatementWrapper;
 use Propel\Runtime\Propel;
 use Propel\Runtime\ServiceContainer\ServiceContainerInterface;
+use RuntimeException;
 use Throwable;
 
 abstract class AbstractQueryExecutor
@@ -86,6 +87,8 @@ abstract class AbstractQueryExecutor
     /**
      * @param \Propel\Runtime\ActiveQuery\SqlBuilder\PreparedStatementDto $preparedStatementDto
      *
+     * @throws \RuntimeException
+     *
      * @return \PDOStatement|\Propel\Runtime\Connection\StatementInterface|bool|null
      */
     protected function executeStatement(PreparedStatementDto $preparedStatementDto)
@@ -96,13 +99,19 @@ abstract class AbstractQueryExecutor
 
         $stmt = null;
         try {
+            /** @var \Propel\Runtime\Connection\StatementInterface|false $stmt */
             $stmt = $this->con->prepare($sql);
+
+            if ($stmt === false) {
+                throw new RuntimeException('PdoConnection::prepare() failed and did not return statement object for execution.');
+            }
+
             if ($params) {
                 $this->adapter->bindValues($stmt, $params, $this->dbMap);
             }
             $stmt->execute();
         } catch (Throwable $e) {
-            $this->handleStatementException($e, $sql, $stmt);
+            $this->handleStatementException($e, $sql, $stmt ?: null);
         }
 
         return $stmt;
@@ -122,13 +131,16 @@ abstract class AbstractQueryExecutor
     protected function handleStatementException(Throwable $e, ?string $sql, $stmt = null): void
     {
         $internalMessage = $e->getMessage();
-        Propel::log($internalMessage, Propel::LOG_ERR);
 
         $isDebugMode = $this->connectionIsInDebugMode();
         if ($isDebugMode && $stmt instanceof StatementWrapper) {
             $sql = $stmt->getExecutedQueryString();
         }
         $publicMessage = "Unable to execute statement [$sql]";
+
+        $fullLogMessage = $publicMessage . PHP_EOL . "Reason: [$internalMessage]";
+        Propel::log($fullLogMessage, Propel::LOG_ERR);
+
         if ($isDebugMode) {
             $publicMessage .= PHP_EOL . "Reason: [$internalMessage]";
         }

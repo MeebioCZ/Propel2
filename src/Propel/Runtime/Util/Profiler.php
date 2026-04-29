@@ -12,6 +12,8 @@ use Propel\Common\Config\Exception\InvalidConfigurationException;
 
 /**
  * Profiler for Propel
+ *
+ * @psalm-consistent-constructor (instantiated by class name in StandardServiceContainer without arguments)
  */
 class Profiler
 {
@@ -74,13 +76,13 @@ class Profiler
     }
 
     /**
-     * Set the duration which triggers the 'slow' label on details.
+     * Set the duration which triggers the 'slow' label on details, such as 0.1 (100ms) or 0.001 (1ms).
      *
-     * @param int $slowThreshold duration in seconds
+     * @param float $slowThreshold duration in seconds
      *
      * @return void
      */
-    public function setSlowThreshold(int $slowThreshold): void
+    public function setSlowThreshold(float $slowThreshold): void
     {
         $this->slowThreshold = $slowThreshold;
     }

@@ -132,7 +132,7 @@ class CrossForeignKeys
      */
     public function isAtLeastOneLocalPrimaryKeyNotCovered(ForeignKey $fk): bool
     {
-        $primaryKeys = $fk->getLocalPrimaryKeys();
+        $primaryKeys = $fk->getLocalColumnObjects();
         foreach ($primaryKeys as $primaryKey) {
             $covered = false;
             foreach ($this->getCrossForeignKeys() as $crossFK) {
@@ -154,7 +154,7 @@ class CrossForeignKeys
     /**
      * Returns all primary keys of middle-table which are not already covered by at least on of our cross foreignKey collection.
      *
-     * @return array<\Propel\Generator\Model\Column>
+     * @return list<\Propel\Generator\Model\Column>
      */
     public function getUnclassifiedPrimaryKeys(): array
     {

@@ -10,15 +10,16 @@ namespace Propel\Tests\Generator\Platform;
 
 use Propel\Generator\Model\Diff\DatabaseComparator;
 use Propel\Generator\Platform\OraclePlatform;
+use Propel\Generator\Platform\PlatformInterface;
 
 class OraclePlatformMigrationTest extends PlatformMigrationTestProvider
 {
     /**
      * Get the Platform object for this class
      *
-     * @return \Propel\Generator\Platform\PlatformInterface
+     * @return \Propel\Generator\Platform\OraclePlatform
      */
-    protected function getPlatform()
+    protected function getPlatform(): PlatformInterface
     {
         return new OraclePlatform();
     }
@@ -104,7 +105,7 @@ ALTER TABLE foo
 
   MODIFY
 (
-    baz NVARCHAR2(12)
+    baz NVARCHAR2(12) DEFAULT 'pdf;jpg;png;doc;docx;xls;xlsx;txt'
 ),
 
   ADD
@@ -517,5 +518,23 @@ ALTER TABLE foo2
 );
 ";
         $this->assertEquals($expected, $this->getPlatform()->getModifyDatabaseDDL($databaseDiff));
+    }
+
+    /**
+     * @dataProvider providerForTestMigrateToUUIDColumn
+     *
+     * @return void
+     */
+    public function testMigrateToUUIDColumn($tableDiff)
+    {
+        $expected = <<<END
+
+ALTER TABLE foo MODIFY
+(
+    id UUID DEFAULT vendor_specific_uuid_generator_function() NOT NULL
+);
+
+END;
+        $this->assertEquals($expected, $this->getPlatform()->getModifyTableColumnsDDL($tableDiff));
     }
 }

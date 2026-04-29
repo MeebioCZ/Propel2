@@ -68,7 +68,7 @@ class PropelModelPager implements IteratorAggregate, Countable
     protected $results;
 
     /**
-     * @var \Propel\Runtime\Connection\ConnectionInterface
+     * @var \Propel\Runtime\Connection\ConnectionInterface|null
      */
     protected $con;
 
@@ -202,7 +202,7 @@ class PropelModelPager implements IteratorAggregate, Countable
     /**
      * @param int $nbLinks
      *
-     * @return array<int>
+     * @return list<int>
      */
     public function getLinks(int $nbLinks = 5): array
     {

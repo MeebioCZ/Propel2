@@ -248,11 +248,12 @@ class CollectionIterator extends ArrayIterator implements IteratorInterface
     /**
      * @param int $flags Not used
      *
-     * @return bool
+     * @return true
      */
-    public function asort($flags = SORT_REGULAR): bool
+    #[\ReturnTypeWillChange]
+    public function asort(int $flags = SORT_REGULAR): bool
     {
-        parent::asort();
+        parent::asort($flags);
         $this->refreshPositions();
 
         return true;
@@ -261,21 +262,23 @@ class CollectionIterator extends ArrayIterator implements IteratorInterface
     /**
      * @param int $flags Not used
      *
-     * @return bool
+     * @return true
      */
-    public function ksort($flags = SORT_REGULAR): bool
+    #[\ReturnTypeWillChange]
+    public function ksort(int $flags = SORT_REGULAR): bool
     {
-        parent::ksort();
+        parent::ksort($flags);
         $this->refreshPositions();
 
         return true;
     }
 
     /**
-     * @param string $callback
+     * @param callable $callback
      *
-     * @return bool
+     * @return true
      */
+    #[\ReturnTypeWillChange]
     public function uasort($callback): bool
     {
         parent::uasort($callback);
@@ -285,10 +288,11 @@ class CollectionIterator extends ArrayIterator implements IteratorInterface
     }
 
     /**
-     * @param string $callback
+     * @param callable $callback
      *
-     * @return bool
+     * @return true
      */
+    #[\ReturnTypeWillChange]
     public function uksort($callback): bool
     {
         parent::uksort($callback);
@@ -298,8 +302,9 @@ class CollectionIterator extends ArrayIterator implements IteratorInterface
     }
 
     /**
-     * @return bool
+     * @return true
      */
+    #[\ReturnTypeWillChange]
     public function natsort(): bool
     {
         parent::natsort();
@@ -309,8 +314,9 @@ class CollectionIterator extends ArrayIterator implements IteratorInterface
     }
 
     /**
-     * @return bool
+     * @return true
      */
+    #[\ReturnTypeWillChange]
     public function natcasesort(): bool
     {
         parent::natcasesort();

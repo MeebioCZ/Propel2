@@ -38,6 +38,7 @@ class Issue989Test extends TestCase
                 <table name="recherche_nature" phpName="RechercheNature" isCrossRef="true">
                     <column name="recherche_id" type="integer" primaryKey="true"/>
                     <column name="nature_id" type="integer" primaryKey="true"/>
+                    <column name="category_id" type="integer"/>
                     <foreign-key foreignTable="recherche" onDelete="cascade">
                         <reference local="recherche_id" foreign="id"/>
                     </foreign-key>

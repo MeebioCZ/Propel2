@@ -111,7 +111,7 @@ protected \$old{$relationName}{$aggregateName};
         $relationName = $this->getRelationName($builder);
         $aggregateName = $this->getParameter('aggregate_name');
         $relatedClass = $builder->getClassNameFromBuilder($builder->getNewStubObjectBuilder($this->getForeignTable()));
-        $search = "    public function set{$relationName}({$relatedClass} \$v = null)
+        $search = "    public function set{$relationName}(?{$relatedClass} \$v = null)
     {";
         $replace = $search . "
         // aggregate_column_relation behavior
@@ -194,9 +194,7 @@ protected \$old{$relationName}{$aggregateName};
      */
     public function queryMethods(AbstractOMBuilder $builder): string
     {
-        $script = '';
-
-        $script .= $this->addQueryFindRelated($builder);
+        $script = $this->addQueryFindRelated($builder);
         $script .= $this->addQueryUpdateRelated($builder);
 
         return $script;

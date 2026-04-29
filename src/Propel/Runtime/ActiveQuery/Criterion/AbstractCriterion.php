@@ -77,7 +77,7 @@ abstract class AbstractCriterion
     /**
      * Other connected criterions
      *
-     * @var array<\Propel\Runtime\ActiveQuery\Criterion\AbstractCriterion>
+     * @var array<int, \Propel\Runtime\ActiveQuery\Criterion\AbstractCriterion>
      */
     protected $clauses = [];
 
@@ -85,7 +85,7 @@ abstract class AbstractCriterion
      * Operators for connected criterions
      * Only self::UND and self::ODER are accepted
      *
-     * @var array<string>
+     * @var array<int, string>
      */
     protected $conjunctions = [];
 
@@ -323,7 +323,7 @@ abstract class AbstractCriterion
         $params = [];
         $this->appendPsTo($sb, $params);
 
-        return '' . $sb;
+        return $sb;
     }
 
     /**
@@ -351,7 +351,7 @@ abstract class AbstractCriterion
             return true;
         }
 
-        if (($obj === null) || !($obj instanceof AbstractCriterion)) {
+        if (!$obj instanceof AbstractCriterion) {
             return false;
         }
 

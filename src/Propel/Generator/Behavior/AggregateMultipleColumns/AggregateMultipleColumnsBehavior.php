@@ -121,7 +121,7 @@ class AggregateMultipleColumnsBehavior extends Behavior
         }
 
         $existingNames = &self::$insertedAggregationNames[$tableName];
-        if (!in_array($baseAggregationName, $existingNames)) {
+        if (!in_array($baseAggregationName, $existingNames, true)) {
             $existingNames[] = $baseAggregationName;
 
             return $baseAggregationName;
@@ -131,7 +131,7 @@ class AggregateMultipleColumnsBehavior extends Behavior
         do {
             $aggregationName = $baseAggregationName . $duplicateAvoidanceSuffix;
             $duplicateAvoidanceSuffix++;
-        } while (in_array($aggregationName, $existingNames));
+        } while (in_array($aggregationName, $existingNames, true));
 
         $existingNames[] = $aggregationName;
 
@@ -220,8 +220,7 @@ class AggregateMultipleColumnsBehavior extends Behavior
      */
     public function objectMethods(ObjectBuilder $builder): string
     {
-        $script = '';
-        $script .= $this->addObjectCompute($builder);
+        $script = $this->addObjectCompute($builder);
         $script .= $this->addObjectUpdate();
 
         return $script;

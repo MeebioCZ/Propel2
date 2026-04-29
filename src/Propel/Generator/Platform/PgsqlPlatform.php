@@ -10,6 +10,7 @@ namespace Propel\Generator\Platform;
 
 use Propel\Generator\Exception\EngineException;
 use Propel\Generator\Model\Column;
+use Propel\Generator\Model\ColumnDefaultValue;
 use Propel\Generator\Model\Database;
 use Propel\Generator\Model\Diff\ColumnDiff;
 use Propel\Generator\Model\Diff\TableDiff;
@@ -40,9 +41,9 @@ class PgsqlPlatform extends DefaultPlatform
      *
      * @return void
      */
-    protected function initialize(): void
+    protected function initializeTypeMap(): void
     {
-        parent::initialize();
+        parent::initializeTypeMap();
         $this->setSchemaDomainMapping(new Domain(PropelTypes::BOOLEAN, 'BOOLEAN'));
         $this->setSchemaDomainMapping(new Domain(PropelTypes::TINYINT, 'INT2'));
         $this->setSchemaDomainMapping(new Domain(PropelTypes::SMALLINT, 'INT2'));
@@ -62,6 +63,8 @@ class PgsqlPlatform extends DefaultPlatform
         $this->setSchemaDomainMapping(new Domain(PropelTypes::SET, 'INT4'));
         $this->setSchemaDomainMapping(new Domain(PropelTypes::DECIMAL, 'NUMERIC'));
         $this->setSchemaDomainMapping(new Domain(PropelTypes::DATETIME, 'TIMESTAMP'));
+        $this->setSchemaDomainMapping(new Domain(PropelTypes::UUID, 'uuid'));
+        $this->setSchemaDomainMapping(new Domain(PropelTypes::UUID_BINARY, 'BYTEA'));
     }
 
     /**
@@ -139,7 +142,6 @@ class PgsqlPlatform extends DefaultPlatform
         if ($table->getIdMethod() == IdMethod::NATIVE) {
             $idMethodParams = $table->getIdMethodParameters();
             if (!$idMethodParams) {
-                $result = null;
                 // We're going to ignore a check for max length (mainly
                 // because I'm not sure how Postgres would handle this w/ SERIAL anyway)
                 foreach ($table->getColumns() as $col) {
@@ -370,8 +372,7 @@ COMMIT;
      */
     public function getAddTableDDL(Table $table): string
     {
-        $ret = '';
-        $ret .= $this->getUseSchemaDDL($table);
+        $ret = $this->getUseSchemaDDL($table);
         $ret .= $this->getAddSequenceDDL($table);
 
         $lines = [];
@@ -444,12 +445,12 @@ COMMENT ON TABLE %s IS %s;
         $pattern = "
 COMMENT ON COLUMN %s.%s IS %s;
 ";
-        if ($description = $column->getDescription()) {
+        if ($column->getDescription()) {
             return sprintf(
                 $pattern,
                 $this->quoteIdentifier($column->getTable()->getName()),
                 $this->quoteIdentifier($column->getName()),
-                $this->quote($description),
+                $this->quote($column->getDescription()),
             );
         }
 
@@ -463,8 +464,7 @@ COMMENT ON COLUMN %s.%s IS %s;
      */
     public function getDropTableDDL(Table $table): string
     {
-        $ret = '';
-        $ret .= $this->getUseSchemaDDL($table);
+        $ret = $this->getUseSchemaDDL($table);
         $pattern = "
 DROP TABLE IF EXISTS %s CASCADE;
 ";
@@ -515,13 +515,29 @@ DROP TABLE IF EXISTS %s CASCADE;
         } else {
             $ddl[] = $sqlType;
         }
-        if ($default = $this->getColumnDefaultValueDDL($col)) {
+
+        if (
+            $col->getDefaultValue()
+            && $col->getDefaultValue()->isExpression()
+            && $col->getDefaultValue()->getValue() === 'CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'
+        ) {
+            $col->setDefaultValue(
+                new ColumnDefaultValue('CURRENT_TIMESTAMP', ColumnDefaultValue::TYPE_EXPR),
+            );
+        }
+
+        $default = $this->getColumnDefaultValueDDL($col);
+        if ($default) {
             $ddl[] = $default;
         }
-        if ($notNull = $this->getNullString($col->isNotNull())) {
+
+        $notNull = $this->getNullString($col->isNotNull());
+        if ($notNull) {
             $ddl[] = $notNull;
         }
-        if ($autoIncrement = $col->getAutoIncrementString()) {
+
+        $autoIncrement = $col->getAutoIncrementString();
+        if ($autoIncrement) {
             $ddl[] = $autoIncrement;
         }
 
@@ -550,7 +566,8 @@ DROP TABLE IF EXISTS %s CASCADE;
      */
     public function getRenameTableDDL(string $fromTableName, string $toTableName): string
     {
-        if (($pos = strpos($toTableName, '.')) !== false) {
+        $pos = strpos($toTableName, '.');
+        if ($pos !== false) {
             $toTableName = substr($toTableName, $pos + 1);
         }
 
@@ -582,7 +599,7 @@ ALTER TABLE %s RENAME TO %s;
      */
     public function hasSize(string $sqlType): bool
     {
-        return !in_array($sqlType, ['BYTEA', 'TEXT', 'DOUBLE PRECISION']);
+        return !in_array(strtoupper($sqlType), ['BYTEA', 'TEXT', 'DOUBLE PRECISION'], true);
     }
 
     /**
@@ -647,12 +664,12 @@ ALTER TABLE %s RENAME TO %s;
 ALTER TABLE %s ALTER COLUMN %s;
 ";
 
-        if (isset($changedProperties['autoIncrement'])) {
+        if ($table && isset($changedProperties['autoIncrement'])) {
             $tableName = $table->getName();
             $colPlainName = $toColumn->getName();
             $seqName = "{$tableName}_{$colPlainName}_seq";
 
-            if ($toColumn->isAutoIncrement() && $table && $table->getIdMethodParameters() == null) {
+            if ($toColumn->isAutoIncrement() && $table->getIdMethodParameters() == null) {
                 $defaultValue = "nextval('$seqName'::regclass)";
                 $toColumn->setDefaultValue($defaultValue);
                 $changedProperties['defaultValueValue'] = [null, $defaultValue];
@@ -670,9 +687,6 @@ CREATE SEQUENCE %s;
             }
 
             if (!$toColumn->isAutoIncrement() && $fromColumn->isAutoIncrement()) {
-                $changedProperties['defaultValueValue'] = [$fromColumn->getDefaultValueString(), null];
-                $toColumn->setDefaultValue(null);
-
                 //remove sequence
                 if ($fromTable->getDatabase()->hasSequence($seqName)) {
                     $this->createOrDropSequences .= sprintf(
@@ -699,9 +713,11 @@ DROP SEQUENCE %s CASCADE;
                 }
             }
 
-            if ($using = $this->getUsingCast($fromColumn, $toColumn)) {
+            $using = $this->getUsingCast($fromColumn, $toColumn);
+            if ($using) {
                 $sqlType .= $using;
             }
+
             $ret .= sprintf(
                 $pattern,
                 $this->quoteIdentifier($table->getName()),
@@ -735,11 +751,23 @@ DROP SEQUENCE %s CASCADE;
      *
      * @return bool
      */
+    public function isUuid(string $type): bool
+    {
+        $strings = ['UUID'];
+
+        return in_array(strtoupper($type), $strings, true);
+    }
+
+    /**
+     * @param string $type
+     *
+     * @return bool
+     */
     public function isString(string $type): bool
     {
         $strings = ['VARCHAR'];
 
-        return in_array(strtoupper($type), $strings);
+        return in_array(strtoupper($type), $strings, true);
     }
 
     /**
@@ -751,7 +779,7 @@ DROP SEQUENCE %s CASCADE;
     {
         $numbers = ['INTEGER', 'INT4', 'INT2', 'NUMBER', 'NUMERIC', 'SMALLINT', 'BIGINT', 'DECIMAL', 'REAL', 'DOUBLE PRECISION', 'SERIAL', 'BIGSERIAL'];
 
-        return in_array(strtoupper($type), $numbers);
+        return in_array(strtoupper($type), $numbers, true);
     }
 
     /**
@@ -766,10 +794,6 @@ DROP SEQUENCE %s CASCADE;
         $toSqlType = strtoupper($toColumn->getDomain()->getSqlType());
         $name = $fromColumn->getName();
 
-        if ($this->isNumber($fromSqlType) && $this->isString($toSqlType)) {
-            //cast from int to string
-            return '  ';
-        }
         if ($this->isString($fromSqlType) && $this->isNumber($toSqlType)) {
             //cast from string to int
             return "
@@ -782,16 +806,18 @@ DROP SEQUENCE %s CASCADE;
             return " USING decode(CAST($name as text), 'escape')";
         }
 
-        if ($fromSqlType === 'DATE' && $toSqlType === 'TIME') {
-            return ' USING NULL';
-        }
-
-        if ($this->isNumber($fromSqlType) && $this->isNumber($toSqlType)) {
+        if (
+            ($this->isNumber($fromSqlType) && $this->isNumber($toSqlType)) ||
+            ($this->isString($fromSqlType) && $this->isString($toSqlType)) ||
+            ($this->isNumber($fromSqlType) && $this->isString($toSqlType)) ||
+            ($this->isUuid($fromSqlType) && $this->isString($toSqlType))
+        ) {
+            // no cast necessary
             return '';
         }
 
-        if ($this->isString($fromSqlType) && $this->isString($toSqlType)) {
-            return '';
+        if ($this->isString($fromSqlType) && $this->isUuid($toSqlType)) {
+            return " USING $name::uuid";
         }
 
         return ' USING NULL';
@@ -880,7 +906,7 @@ ALTER TABLE %s DROP CONSTRAINT %s;
      *
      * @throws \Propel\Generator\Exception\EngineException
      *
-     * @return array<string>|string|null
+     * @return string
      */
     public function getIdentifierPhp(
         string $columnValueMutator,
@@ -888,7 +914,7 @@ ALTER TABLE %s DROP CONSTRAINT %s;
         string $sequenceName = '',
         string $tab = '            ',
         ?string $phpType = null
-    ) {
+    ): string {
         if (!$sequenceName) {
             throw new EngineException('PostgreSQL needs a sequence name to fetch primary keys');
         }
