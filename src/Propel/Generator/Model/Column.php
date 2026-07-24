@@ -1244,9 +1244,9 @@ class Column extends MappingModel
      *
      * @return int
      */
-    public function getPDOType(): int
+    public function getPdoType(): int
     {
-        return PropelTypes::getPDOType($this->getType());
+        return PropelTypes::getPdoType($this->getType());
     }
 
     /**
