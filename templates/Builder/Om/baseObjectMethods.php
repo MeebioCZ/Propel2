@@ -49,7 +49,7 @@
      */
     public function setNew($b) : void
     {
-        $this->new = (boolean) $b;
+        $this->new = (bool) $b;
     }
 
     /**
@@ -68,7 +68,7 @@
      */
     public function setDeleted($b) : void
     {
-        $this->deleted = (boolean) $b;
+        $this->deleted = (bool) $b;
     }
 
     /**
