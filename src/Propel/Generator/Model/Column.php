@@ -740,11 +740,12 @@ class Column extends MappingModel
     public function getPhpType(): string
     {
         // We need to transform boolean to bool
-        if ($this->phpType) {
-            return $this->phpType === 'boolean' ? 'bool' : $this->phpType;
+        $type = $this->phpType ?: $this->getPhpNative();
+        if ($type === 'boolean') {
+            $type = 'bool';
         }
 
-        return $this->getPhpNative();
+        return $type;
     }
 
     /**
