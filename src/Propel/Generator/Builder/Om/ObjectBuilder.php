@@ -1878,13 +1878,11 @@ abstract class " . $this->getUnqualifiedClassName() . $parentClass . ' implement
                 if ('array' !== $typeHint) {
                     $typeHint = $this->declareClass($typeHint);
                 }
+            }
 
-                $typeHint .= ' ';
-
-                if (!$column->isNotNull()) {
-                    $typeHint .= '|null';
-                    $null = ' = null';
-                }
+            if (!$column->isNotNull()) {
+                $typeHint .= '|null';
+                $null = ' = null';
             }
         }
 
