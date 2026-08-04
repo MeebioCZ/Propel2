@@ -525,7 +525,9 @@ abstract class " . $this->getUnqualifiedClassName() . $parentClass . ' implement
         }
         $clo = $column->getLowercasedName();
 
-        $orNull = $column->isNotNull() ? '' : '|null';
+        // We need to keep keys nullable otherwise it breaks lots of older behaviours
+        $isColKey = $column->isPrimaryKey() || $column->isForeignKey();
+        $orNull = $column->isNotNull() && !$isColKey ? '' : '|null';
 
         $script .= "
     /**
@@ -1880,7 +1882,9 @@ abstract class " . $this->getUnqualifiedClassName() . $parentClass . ' implement
                 }
             }
 
-            if (!$column->isNotNull()) {
+            // Let's just keep keys always nullable, otherwise we are breaking a lot of behaviours
+            $isColKey = $column->isPrimaryKey() || $column->isForeignKey();
+            if (!$column->isNotNull() || $isColKey) {
                 $typeHint .= '|null';
                 $null = ' = null';
             }
